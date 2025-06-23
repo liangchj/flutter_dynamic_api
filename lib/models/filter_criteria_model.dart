@@ -61,17 +61,40 @@ class FilterCriteriaModel {
     if (validateResult.msgMap.isNotEmpty) {
       throw Exception(validateResult.msgMap);
     }
+    List<String> errorList = [];
     var multiples = map["multiples"];
-    var netApi = map["netApi"];
-    var filterCriteriaParamsList = map["filterCriteriaParamsList"];
+    var netApiVar = map["netApi"];
+    Map<String, dynamic>? netApiMap;
+    if (netApiVar != null) {
+      try {
+        netApiMap = DataTypeConvertUtils.toMapStrDyMap(netApiVar);
+      } catch (e) {
+        errorList.add("读取配置netApi转换类型时报错：$e");
+      }
+    }
 
+    var filterCriteriaParamsListVar = map["filterCriteriaParamsList"];
+    List<Map<String, dynamic>>? filterCriteriaParamsList;
+    if (filterCriteriaParamsListVar != null) {
+      try {
+        filterCriteriaParamsList = DataTypeConvertUtils.toListMapStrDyMap(
+          filterCriteriaParamsListVar,
+        );
+      } catch (e) {
+        errorList.add("读取配置filterCriteriaParamsList转换类型时报错：$e");
+      }
+    }
+    if (errorList.isNotEmpty) {
+      throw Exception(errorList.join("\n"));
+    }
     return FilterCriteriaModel(
       enName: map["enName"],
       name: map["name"],
       requestKey: map["requestKey"],
-      requestValueConvertJsFn: map["requestValueConvertJsFn"],
+      requestValueConvertJsFn: (map["requestValueConvertJsFn"] ?? "")
+          .toString(),
       multiples: multiples == null ? false : bool.tryParse(multiples) ?? false,
-      netApi: netApi == null ? null : NetApiModel.fromJson(netApi),
+      netApi: netApiMap == null ? null : NetApiModel.fromJson(netApiMap),
       filterCriteriaParamsList: filterCriteriaParamsList == null
           ? null
           : filterCriteriaParamsModelListFromListJson(filterCriteriaParamsList),

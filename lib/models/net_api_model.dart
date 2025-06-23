@@ -64,11 +64,49 @@ class NetApiModel {
     if (validateResult.msgMap.isNotEmpty) {
       throw Exception(validateResult.msgMap);
     }
+    List<String> errorList = [];
     var useBaseUrl = map["useBaseUrl"];
     var useWebView = map["useWebView"];
     var usePost = map["usePost"];
     var userAgent = map["userAgent"];
-    var filterCriteriaList = map["filterCriteriaList"];
+
+    var requestParamsVar = map["requestParams"];
+    Map<String, dynamic> requestParamsMap = {};
+    if (requestParamsVar != null) {
+      try {
+        requestParamsMap.addAll(
+          DataTypeConvertUtils.toMapStrDyMap(requestParamsVar),
+        );
+      } catch (e) {
+        errorList.add("读取配置requestParams转换类型时报错：$e");
+      }
+    }
+
+    var responseParamsVar = map["responseParams"];
+    Map<String, dynamic> responseParamsMap = {};
+    if (responseParamsVar != null) {
+      try {
+        responseParamsMap.addAll(
+          DataTypeConvertUtils.toMapStrDyMap(responseParamsVar),
+        );
+      } catch (e) {
+        errorList.add("读取配置responseParams转换类型时报错：$e");
+      }
+    }
+    var filterCriteriaListVar = map["filterCriteriaList"];
+    List<Map<String, dynamic>>? filterCriteriaList;
+    if (filterCriteriaListVar != null) {
+      try {
+        filterCriteriaList = DataTypeConvertUtils.toListMapStrDyMap(
+          filterCriteriaListVar,
+        );
+      } catch (e) {
+        errorList.add("读取配置filterCriteriaList转换类型时报错：$e");
+      }
+    }
+    if (errorList.isNotEmpty) {
+      throw Exception(errorList.join("\n"));
+    }
     return NetApiModel(
       path: map["path"],
       useBaseUrl: useBaseUrl == null ? true : bool.tryParse(useBaseUrl) ?? true,
@@ -77,8 +115,8 @@ class NetApiModel {
           : bool.tryParse(useWebView) ?? false,
       usePost: usePost == null ? false : bool.tryParse(usePost) ?? false,
       userAgent: userAgent,
-      requestParams: RequestParamsModel.fromJson(map["requestParams"]),
-      responseParams: ResponseParamsModel.fromJson(map["responseParams"]),
+      requestParams: RequestParamsModel.fromJson(requestParamsMap),
+      responseParams: ResponseParamsModel.fromJson(responseParamsMap),
       filterCriteriaList: filterCriteriaList == null
           ? null
           : filterCriteriaModelListFromListJson(filterCriteriaList),
@@ -243,7 +281,7 @@ class NetApiModel {
     }
     bool flag = true;
     List<Map<String, dynamic>> list = [];
-    if(value is List<FilterCriteriaModel>?) {
+    if (value is List<FilterCriteriaModel>?) {
       return true;
     }
     if (value is List<Map<String, dynamic>>) {

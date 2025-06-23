@@ -22,14 +22,36 @@ class ApiConfigModel {
     if (validateResult.msgMap.isNotEmpty) {
       throw Exception(validateResult.msgMap);
     }
+    List<String> errorList = [];
+    var apiBaseModelVar = map["apiBaseModel"];
+    Map<String, dynamic> apiBaseMap = {};
+    if (apiBaseModelVar != null) {
+      try {
+        apiBaseMap.addAll(DataTypeConvertUtils.toMapStrDyMap(apiBaseModelVar));
+      } catch (e) {
+        errorList.add("读取配置apiBaseModel转换类型时报错：$e");
+      }
+    }
+
     var netApiMap = map["netApiMap"];
     Map<String, NetApiModel> netApiModelMap = {};
-    for (var entry in netApiMap.entries) {
-      var netApiModel = NetApiModel.fromJson(entry.value);
-      netApiModelMap[entry.key] = netApiModel;
+    if (netApiMap != null) {
+      try {
+        Map<String, Map<String, dynamic>> dataMap =
+            DataTypeConvertUtils.toMapStrMapStrDyMap(netApiMap);
+        for (var entry in dataMap.entries) {
+          var netApiModel = NetApiModel.fromJson(entry.value);
+          netApiModelMap[entry.key] = netApiModel;
+        }
+      } catch (e) {
+        errorList.add("读取配置netApiMap转换类型时报错：$e");
+      }
+    }
+    if (errorList.isNotEmpty) {
+      throw Exception(errorList.join("\n"));
     }
     return ApiConfigModel(
-      apiBaseModel: ApiBaseModel.fromJson(map["apiBaseModel"]),
+      apiBaseModel: ApiBaseModel.fromJson(apiBaseMap),
       netApiMap: netApiModelMap,
     );
   }
