@@ -234,10 +234,17 @@ class DefaultResponseParser<T> implements ResponseParser<T> {
     Map<String, dynamic> resultMap = {"statusCode": statusCode, "msg": resMsg};
     var data = map[resDataKey];
     if (data != null) {
+      Map<String, dynamic> dataMap = {};
       if (data is List) {
-        resultMap["data"] = data[0];
+        dataMap = data[0];
       } else {
-        resultMap["data"] = data;
+        dataMap = data;
+      }
+      if (responseParamsModel.resultKeyMap.isNotEmpty) {
+        for (var entry in responseParamsModel.resultKeyMap.entries) {
+          resultMap[entry.key] = map[entry.value];
+        }
+        resultMap["data"] = dataMap;
       }
     }
     return resultMap;
@@ -267,6 +274,14 @@ class DefaultResponseParser<T> implements ResponseParser<T> {
         continue;
       }
       resultMap[key] = map[keyMap[key]] ?? 0;
+    }
+    if (keyMap.isNotEmpty) {
+      for (var entry in keyMap.entries) {
+        if (pageKeyList.contains(entry.key)) {
+          continue;
+        }
+        resultMap[entry.key] = map[entry.value];
+      }
     }
 
     return resultMap;
