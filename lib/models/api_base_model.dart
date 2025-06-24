@@ -64,19 +64,19 @@ class ApiBaseModel {
 
     JsonToModelUtils.validateFieldStr(
       map,
-      apiKeyDescModel: baseUrlKey,
+      apiKeyDescModel: baseUrlField,
       validateResult: validateResult,
     );
 
     JsonToModelUtils.validateFieldStr(
       map,
-      apiKeyDescModel: nameKey,
+      apiKeyDescModel: nameField,
       validateResult: validateResult,
     );
 
     JsonToModelUtils.validateFieldStr(
       map,
-      apiKeyDescModel: enNameKey,
+      apiKeyDescModel: enNameField,
       validateResult: validateResult,
     );
     if (validateResult.flag) {
@@ -85,17 +85,17 @@ class ApiBaseModel {
     return validateResult;
   }
 
-  static final ApiKeyDescModel baseUrlKey = ApiKeyDescModel(
+  static final ApiKeyDescModel baseUrlField = ApiKeyDescModel(
     key: "baseUrl",
     desc: "资源基本链接",
     isRequired: true,
   );
-  static final ApiKeyDescModel nameKey = ApiKeyDescModel(
+  static final ApiKeyDescModel nameField = ApiKeyDescModel(
     key: "name",
     desc: "资源中文名称",
     isRequired: true,
   );
-  static final ApiKeyDescModel enNameKey = ApiKeyDescModel(
+  static final ApiKeyDescModel enNameField = ApiKeyDescModel(
     key: "enName",
     desc: "资源英文名称",
     isRequired: true,

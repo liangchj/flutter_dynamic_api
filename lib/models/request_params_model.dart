@@ -81,7 +81,7 @@ class RequestParamsModel {
 
     JsonToModelUtils.validateField<Map<String, dynamic>?>(
       map,
-      apiKeyDescModel: headerParamsKey,
+      apiKeyDescModel: headerParamsField,
       validateResult: validateResult,
       converter: (value) {
         if (value is Map<String, dynamic>? || value is Map<String, dynamic>) {
@@ -91,8 +91,8 @@ class RequestParamsModel {
         try {
           DataTypeConvertUtils.toMapStrDyMap(value);
         } catch (e) {
-          validateResult.msgMap[headerParamsKey.key] =
-              "${headerParamsKey.desc}（${headerParamsKey.key}）数据转换时报错：$e";
+          validateResult.msgMap[headerParamsField.key] =
+              "${headerParamsField.desc}（${headerParamsField.key}）数据转换时报错：$e";
           return false;
         }
         return true;
@@ -101,7 +101,7 @@ class RequestParamsModel {
 
     JsonToModelUtils.validateField<Map<String, dynamic>?>(
       map,
-      apiKeyDescModel: staticParamsKey,
+      apiKeyDescModel: staticParamsField,
       validateResult: validateResult,
       converter: (value) {
         if (value is Map<String, dynamic>? || value is Map<String, dynamic>) {
@@ -111,8 +111,8 @@ class RequestParamsModel {
         try {
           DataTypeConvertUtils.toMapStrDyMap(value);
         } catch (e) {
-          validateResult.msgMap[staticParamsKey.key] =
-              "${staticParamsKey.desc}（${staticParamsKey.key}）数据转换时报错：$e";
+          validateResult.msgMap[staticParamsField.key] =
+              "${staticParamsField.desc}（${staticParamsField.key}）数据转换时报错：$e";
           return false;
         }
         return true;
@@ -120,7 +120,7 @@ class RequestParamsModel {
     );
     JsonToModelUtils.validateField<Map<String, dynamic>?>(
       map,
-      apiKeyDescModel: dynamicParamsKey,
+      apiKeyDescModel: dynamicParamsField,
       validateResult: validateResult,
       converter: (value) {
         if (value is Map<String, dynamic>? || value is Map<String, dynamic>) {
@@ -130,8 +130,8 @@ class RequestParamsModel {
         try {
           DataTypeConvertUtils.toMapStrDyMap(value);
         } catch (e) {
-          validateResult.msgMap[dynamicParamsKey.key] =
-              "${dynamicParamsKey.desc}（${dynamicParamsKey.key}）数据转换时报错：$e";
+          validateResult.msgMap[dynamicParamsField.key] =
+              "${dynamicParamsField.desc}（${dynamicParamsField.key}）数据转换时报错：$e";
           return false;
         }
         return true;
@@ -143,17 +143,17 @@ class RequestParamsModel {
     return validateResult;
   }
 
-  static final ApiKeyDescModel headerParamsKey = ApiKeyDescModel(
+  static final ApiKeyDescModel headerParamsField = ApiKeyDescModel(
     key: "headerParams",
     desc: "请求头",
     isRequired: false,
   );
-  static final ApiKeyDescModel staticParamsKey = ApiKeyDescModel(
+  static final ApiKeyDescModel staticParamsField = ApiKeyDescModel(
     key: "staticParams",
     desc: "请求静态参数",
     isRequired: false,
   );
-  static final ApiKeyDescModel dynamicParamsKey = ApiKeyDescModel(
+  static final ApiKeyDescModel dynamicParamsField = ApiKeyDescModel(
     key: "dynamicParams",
     desc: "请求动态参数",
     isRequired: false,

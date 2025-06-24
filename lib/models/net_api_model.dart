@@ -162,36 +162,36 @@ class NetApiModel {
 
     JsonToModelUtils.validateFieldStr(
       map,
-      apiKeyDescModel: pathKey,
+      apiKeyDescModel: pathField,
       validateResult: validateResult,
     );
     JsonToModelUtils.validateFieldBool(
       map,
-      apiKeyDescModel: useBaseUrlKey,
-      validateResult: validateResult,
-    );
-
-    JsonToModelUtils.validateFieldBool(
-      map,
-      apiKeyDescModel: useWebViewKey,
+      apiKeyDescModel: useBaseUrlField,
       validateResult: validateResult,
     );
 
     JsonToModelUtils.validateFieldBool(
       map,
-      apiKeyDescModel: usePostKey,
+      apiKeyDescModel: useWebViewField,
       validateResult: validateResult,
     );
 
     JsonToModelUtils.validateFieldBool(
       map,
-      apiKeyDescModel: userAgentKey,
+      apiKeyDescModel: usePostField,
+      validateResult: validateResult,
+    );
+
+    JsonToModelUtils.validateFieldBool(
+      map,
+      apiKeyDescModel: userAgentField,
       validateResult: validateResult,
     );
 
     JsonToModelUtils.validateField<RequestParamsModel>(
       map,
-      apiKeyDescModel: requestParamsKey,
+      apiKeyDescModel: requestParamsField,
       validateResult: validateResult,
       converter: (value) =>
           requestParamsFieldTypeValidateAndConvert(value, validateResult),
@@ -199,7 +199,7 @@ class NetApiModel {
 
     JsonToModelUtils.validateField<ResponseParamsModel>(
       map,
-      apiKeyDescModel: responseParamsKey,
+      apiKeyDescModel: responseParamsField,
       validateResult: validateResult,
       converter: (value) =>
           responseParamsFieldTypeValidateAndConvert(value, validateResult),
@@ -207,7 +207,7 @@ class NetApiModel {
 
     JsonToModelUtils.validateField<List<FilterCriteriaModel>?>(
       map,
-      apiKeyDescModel: filterCriteriaListKey,
+      apiKeyDescModel: filterCriteriaListField,
       validateResult: validateResult,
       converter: (value) =>
           filterCriteriaFieldTypeValidateAndConvert(value, validateResult),
@@ -233,13 +233,13 @@ class NetApiModel {
     try {
       dataMap.addAll(DataTypeConvertUtils.toMapStrDyMap(value));
     } catch (e) {
-      validateResult.msgMap[requestParamsKey.key] =
-          "${requestParamsKey.desc}（${requestParamsKey.key}）转换数据时报错：$e";
+      validateResult.msgMap[requestParamsField.key] =
+          "${requestParamsField.desc}（${requestParamsField.key}）转换数据时报错：$e";
       return false;
     }
     var result = RequestParamsModel.validateField(dataMap);
-    validateResult.childValidateResultMap[requestParamsKey.key] = {
-      requestParamsKey.key: result,
+    validateResult.childValidateResultMap[requestParamsField.key] = {
+      requestParamsField.key: result,
     };
     return result.flag;
   }
@@ -258,13 +258,13 @@ class NetApiModel {
     try {
       dataMap.addAll(DataTypeConvertUtils.toMapStrDyMap(value));
     } catch (e) {
-      validateResult.msgMap[responseParamsKey.key] =
-          "${responseParamsKey.desc}（${responseParamsKey.key}）转换数据时报错：$e";
+      validateResult.msgMap[responseParamsField.key] =
+          "${responseParamsField.desc}（${responseParamsField.key}）转换数据时报错：$e";
       return false;
     }
     var result = ResponseParamsModel.validateField(dataMap);
-    validateResult.childValidateResultMap[responseParamsKey.key] = {
-      responseParamsKey.key: result,
+    validateResult.childValidateResultMap[responseParamsField.key] = {
+      responseParamsField.key: result,
     };
     return result.flag;
   }
@@ -294,8 +294,8 @@ class NetApiModel {
         list.addAll(DataTypeConvertUtils.toListMapStrDyMap(value));
       } catch (e) {
         flag = false;
-        validateResult.msgMap[filterCriteriaListKey.key] =
-            "${filterCriteriaListKey.desc}（${filterCriteriaListKey.key}）数据转换时报错：$e";
+        validateResult.msgMap[filterCriteriaListField.key] =
+            "${filterCriteriaListField.desc}（${filterCriteriaListField.key}）数据转换时报错：$e";
         return false;
       }
     }
@@ -307,47 +307,47 @@ class NetApiModel {
         flag = false;
       }
     }
-    validateResult.childValidateResultMap[filterCriteriaListKey.key] =
+    validateResult.childValidateResultMap[filterCriteriaListField.key] =
         filterCriteriaResultMap;
     return flag;
   }
 
-  static final ApiKeyDescModel pathKey = ApiKeyDescModel(
+  static final ApiKeyDescModel pathField = ApiKeyDescModel(
     key: "path",
     desc: "请求路径",
     isRequired: true,
   );
-  static final ApiKeyDescModel useBaseUrlKey = ApiKeyDescModel(
+  static final ApiKeyDescModel useBaseUrlField = ApiKeyDescModel(
     key: "useBaseUrl",
     desc: "是否使用基本的链接",
     isRequired: false,
   );
-  static final ApiKeyDescModel useWebViewKey = ApiKeyDescModel(
+  static final ApiKeyDescModel useWebViewField = ApiKeyDescModel(
     key: "useWebView",
     desc: "是否使用webView",
     isRequired: false,
   );
-  static final ApiKeyDescModel usePostKey = ApiKeyDescModel(
+  static final ApiKeyDescModel usePostField = ApiKeyDescModel(
     key: "usePost",
     desc: "是否使用post请求",
     isRequired: false,
   );
-  static final ApiKeyDescModel userAgentKey = ApiKeyDescModel(
+  static final ApiKeyDescModel userAgentField = ApiKeyDescModel(
     key: "userAgent",
     desc: "指定代理",
     isRequired: false,
   );
-  static final ApiKeyDescModel requestParamsKey = ApiKeyDescModel(
+  static final ApiKeyDescModel requestParamsField = ApiKeyDescModel(
     key: "requestParams",
     desc: "请求信息",
     isRequired: true,
   );
-  static final ApiKeyDescModel responseParamsKey = ApiKeyDescModel(
+  static final ApiKeyDescModel responseParamsField = ApiKeyDescModel(
     key: "responseParams",
     desc: "响应信息",
     isRequired: true,
   );
-  static final ApiKeyDescModel filterCriteriaListKey = ApiKeyDescModel(
+  static final ApiKeyDescModel filterCriteriaListField = ApiKeyDescModel(
     key: "filterCriteriaList",
     desc: "过滤请求列表",
     isRequired: false,

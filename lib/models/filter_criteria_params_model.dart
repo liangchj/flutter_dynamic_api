@@ -87,19 +87,19 @@ class FilterCriteriaParamsModel {
     }
     JsonToModelUtils.validateFieldStr(
       map,
-      apiKeyDescModel: valueKey,
+      apiKeyDescModel: valueField,
       validateResult: validateResult,
     );
 
     JsonToModelUtils.validateFieldStr(
       map,
-      apiKeyDescModel: labelKey,
+      apiKeyDescModel: labelField,
       validateResult: validateResult,
     );
 
     JsonToModelUtils.validateFieldStr(
       map,
-      apiKeyDescModel: parentValueKey,
+      apiKeyDescModel: parentValueField,
       validateResult: validateResult,
     );
     if (validateResult.flag) {
@@ -108,17 +108,17 @@ class FilterCriteriaParamsModel {
     return validateResult;
   }
 
-  static final ApiKeyDescModel valueKey = ApiKeyDescModel(
+  static final ApiKeyDescModel valueField = ApiKeyDescModel(
     key: "value",
     desc: "传入的值",
     isRequired: true,
   );
-  static final ApiKeyDescModel labelKey = ApiKeyDescModel(
+  static final ApiKeyDescModel labelField = ApiKeyDescModel(
     key: "label",
     desc: "显示的值",
     isRequired: true,
   );
-  static final ApiKeyDescModel parentValueKey = ApiKeyDescModel(
+  static final ApiKeyDescModel parentValueField = ApiKeyDescModel(
     key: "parentValue",
     desc: "父级value",
     isRequired: false,

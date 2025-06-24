@@ -230,7 +230,7 @@ class DefaultResponseParser<T> implements ResponseParser<T> {
     String statusCodeKey = responseParamsModel.statusCodeKey;
     String statusCode = (map[statusCodeKey] ?? "").toString();
     String resDataKey = responseParamsModel.resDataKey;
-    String resMsg = responseParamsModel.resMsg ?? "msg";
+    String resMsg = map[responseParamsModel.resMsgKey ?? "msg"] ?? "";
     Map<String, dynamic> resultMap = {"statusCode": statusCode, "msg": resMsg};
     var data = map[resDataKey];
     if (data != null) {
@@ -254,7 +254,7 @@ class DefaultResponseParser<T> implements ResponseParser<T> {
     String statusCodeKey = responseParamsModel.statusCodeKey;
     String statusCode = (map[statusCodeKey] ?? "").toString();
     String resDataKey = responseParamsModel.resDataKey;
-    String resMsg = responseParamsModel.resMsg ?? "msg";
+    String resMsg = map[responseParamsModel.resMsgKey ?? "msg"] ?? "";
     List<dynamic> data = map[resDataKey] ?? [];
     Map<String, dynamic> resultMap = {
       "statusCode": statusCode,
@@ -284,7 +284,7 @@ class DefaultResponseParser<T> implements ResponseParser<T> {
     if (statusCode != successStatusCode) {
       return DefaultResponseModel<T>(
         statusCode: ResponseParseStatusCodeEnum.error.code,
-        msg: map[resMsg] ?? ResponseParseStatusCodeEnum.error.name,
+        msg: resMsg.isEmpty ? ResponseParseStatusCodeEnum.error.name : resMsg,
       );
     }
     dynamic data = map["data"];
@@ -337,7 +337,7 @@ class DefaultResponseParser<T> implements ResponseParser<T> {
         totalPage: 0,
         totalCount: 0,
         statusCode: ResponseParseStatusCodeEnum.error.code,
-        msg: map[resMsg] ?? ResponseParseStatusCodeEnum.error.name,
+        msg: resMsg.isEmpty ? ResponseParseStatusCodeEnum.error.name : resMsg,
       );
     }
     int page = int.tryParse((map["page"] ?? 0).toString()) ?? 0;
