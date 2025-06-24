@@ -1,9 +1,7 @@
 import 'dart:convert';
-
+import 'package:flutter_dynamic_api/utils/data_type_convert_utils.dart';
 import 'package:flutter_js/js_eval_result.dart';
-
 import '../enums/response_parse_status_code_common.dart';
-import '../models/base_resource_model.dart';
 import '../models/default_response_model.dart';
 import '../models/net_api_model.dart';
 import '../models/page_model.dart';
@@ -11,13 +9,15 @@ import '../models/response_params_model.dart';
 import '../utils/js_execute_utils.dart';
 import 'response_parser.dart';
 
-class DefaultResponseParser extends ResponseParser {
+class DefaultResponseParser<T> implements ResponseParser<T> {
+  final T Function(Map<String, dynamic>) fromJson;
+
+  DefaultResponseParser(this.fromJson);
   @override
-  PageModel<BaseResourceModel> listDataParseFromJson(
+  PageModel<T> listDataParseFromJson(
     Map<String, dynamic> map,
-    NetApiModel netApiModel, {
-    Map<String, String>? keyMap,
-  }) {
+    NetApiModel netApiModel,
+  ) {
     Map<String, dynamic> dataMap = convertTargetJsonMultiple(
       map,
       netApiModel.responseParams,
@@ -26,13 +26,10 @@ class DefaultResponseParser extends ResponseParser {
   }
 
   @override
-  PageModel<BaseResourceModel> listParseFromDynamic(
-    dynamic data,
-    NetApiModel netApiModel,
-  ) {
+  PageModel<T> listParseFromDynamic(dynamic data, NetApiModel netApiModel) {
     Map<String, dynamic> dataMap = {};
     if (data == null) {
-      return PageModel<BaseResourceModel>(
+      return PageModel<T>(
         page: 0,
         pageSize: 0,
         totalPage: 0,
@@ -49,7 +46,7 @@ class DefaultResponseParser extends ResponseParser {
     } else if (data is Map<String, dynamic>) {
       dataMap.addAll(data);
     } else {
-      return PageModel<BaseResourceModel>(
+      return PageModel<T>(
         page: 0,
         pageSize: 0,
         totalPage: 0,
@@ -66,7 +63,7 @@ class DefaultResponseParser extends ResponseParser {
   /// 未设置设置了key-value读取数据，使用自定义的Js方法解析
   /// 结果是json
   @override
-  PageModel<BaseResourceModel> listDataParseFromJsonAndJsFn(
+  PageModel<T> listDataParseFromJsonAndJsFn(
     Map<String, dynamic> map,
     NetApiModel netApiModel,
   ) {
@@ -77,12 +74,12 @@ class DefaultResponseParser extends ResponseParser {
   /// 未设置设置了key-value读取数据，使用自定义的Js方法解析
   /// 结果未知
   @override
-  PageModel<BaseResourceModel> listParseFromDynamicAndJsFn(
+  PageModel<T> listParseFromDynamicAndJsFn(
     dynamic data,
     NetApiModel netApiModel,
   ) {
     if (data == null) {
-      return PageModel<BaseResourceModel>(
+      return PageModel<T>(
         page: 0,
         pageSize: 0,
         totalPage: 0,
@@ -94,7 +91,7 @@ class DefaultResponseParser extends ResponseParser {
     }
     if (netApiModel.responseParams.resultConvertJsFn == null ||
         netApiModel.responseParams.resultConvertJsFn!.isEmpty) {
-      return PageModel<BaseResourceModel>(
+      return PageModel<T>(
         page: 0,
         pageSize: 0,
         totalPage: 0,
@@ -107,7 +104,7 @@ class DefaultResponseParser extends ResponseParser {
       JsExecuteUtils.applyGetFlutterJavascriptRuntime();
     }
     if (JsExecuteUtils.flutterJs == null) {
-      return PageModel<BaseResourceModel>(
+      return PageModel<T>(
         page: 0,
         pageSize: 0,
         totalPage: 0,
@@ -124,7 +121,7 @@ class DefaultResponseParser extends ResponseParser {
         netApiModel.responseParams.resultConvertJsFn!,
       );
     } catch (e) {
-      return PageModel<BaseResourceModel>(
+      return PageModel<T>(
         page: 0,
         pageSize: 0,
         totalPage: 0,
@@ -144,7 +141,7 @@ class DefaultResponseParser extends ResponseParser {
       /// 执行js方法
       complexResult = JsExecuteUtils.flutterJs!.evaluate(jsFnStr);
     } catch (e) {
-      return PageModel<BaseResourceModel>(
+      return PageModel<T>(
         page: 0,
         pageSize: 0,
         totalPage: 0,
@@ -169,7 +166,7 @@ class DefaultResponseParser extends ResponseParser {
         }
       }
     } catch (e) {
-      return PageModel<BaseResourceModel>(
+      return PageModel<T>(
         page: 0,
         pageSize: 0,
         totalPage: 0,
@@ -184,7 +181,7 @@ class DefaultResponseParser extends ResponseParser {
   }
 
   @override
-  DefaultResponseModel<BaseResourceModel> detailParseFromJson(
+  DefaultResponseModel<T> detailParseFromJson(
     Map<String, dynamic> map,
     NetApiModel netApiModel,
   ) {
@@ -196,13 +193,13 @@ class DefaultResponseParser extends ResponseParser {
   }
 
   @override
-  DefaultResponseModel<BaseResourceModel> detailParseFromDynamic(
+  DefaultResponseModel<T> detailParseFromDynamic(
     dynamic data,
     NetApiModel netApiModel,
   ) {
     Map<String, dynamic> dataMap = {};
     if (data == null) {
-      return DefaultResponseModel<BaseResourceModel>(
+      return DefaultResponseModel<T>(
         statusCode: ResponseParseStatusCodeEnum.dataNull.code,
         msg: ResponseParseStatusCodeEnum.dataNull.name,
       );
@@ -214,7 +211,7 @@ class DefaultResponseParser extends ResponseParser {
     } else if (data is Map<String, dynamic>) {
       dataMap.addAll(data);
     } else {
-      return DefaultResponseModel<BaseResourceModel>(
+      return DefaultResponseModel<T>(
         statusCode: ResponseParseStatusCodeEnum.parseFail.code,
         msg:
             "${ResponseParseStatusCodeEnum.parseFail.name}，返回的数据不是有效的Map<dynamic, dynamic>或Map<String, dynamic>格式，请自定义js方法转换",
@@ -277,7 +274,7 @@ class DefaultResponseParser extends ResponseParser {
 
   /// 读取结果为单个目标对象
   /// 一般用于详情
-  DefaultResponseModel<BaseResourceModel> parseResponseToResponseModel(
+  DefaultResponseModel<T> parseResponseToResponseModel(
     Map<String, dynamic> map,
     ResponseParamsModel responseParamsModel,
   ) {
@@ -285,7 +282,7 @@ class DefaultResponseParser extends ResponseParser {
     String statusCode = (map["statusCode"] ?? "").toString();
     String resMsg = (map["msg"] ?? "").toString();
     if (statusCode != successStatusCode) {
-      return DefaultResponseModel<BaseResourceModel>(
+      return DefaultResponseModel<T>(
         statusCode: ResponseParseStatusCodeEnum.error.code,
         msg: map[resMsg] ?? ResponseParseStatusCodeEnum.error.name,
       );
@@ -305,20 +302,19 @@ class DefaultResponseParser extends ResponseParser {
             "具体数据不是有效的Map<dynamic, dynamic>或Map<String, dynamic>格式",
           );
         }
-        BaseResourceModel resourceModel = BaseResourceModel.fromJson(data);
-        return DefaultResponseModel<BaseResourceModel>(
-          model: resourceModel,
+        return DefaultResponseModel<T>(
+          model: fromJson(data),
           statusCode: ResponseParseStatusCodeEnum.success.code,
           msg: ResponseParseStatusCodeEnum.success.name,
         );
       } catch (e) {
-        return DefaultResponseModel<BaseResourceModel>(
+        return DefaultResponseModel<T>(
           statusCode: ResponseParseStatusCodeEnum.parseFail.code,
           msg: "${ResponseParseStatusCodeEnum.parseFail.name}，$e",
         );
       }
     }
-    return DefaultResponseModel<BaseResourceModel>(
+    return DefaultResponseModel<T>(
       statusCode: ResponseParseStatusCodeEnum.dataNull.code,
       msg: ResponseParseStatusCodeEnum.dataNull.name,
     );
@@ -326,7 +322,7 @@ class DefaultResponseParser extends ResponseParser {
 
   /// 读取响应结果为多个目标对象（PageModel对象）
   /// 一般用于列表
-  PageModel<BaseResourceModel> parseResponseToPageModel(
+  PageModel<T> parseResponseToPageModel(
     Map<String, dynamic> map,
     ResponseParamsModel responseParamsModel,
   ) {
@@ -335,7 +331,7 @@ class DefaultResponseParser extends ResponseParser {
     String resMsg = (map["msg"] ?? "").toString();
 
     if (statusCode != successStatusCode) {
-      return PageModel<BaseResourceModel>(
+      return PageModel<T>(
         page: 0,
         pageSize: 0,
         totalPage: 0,
@@ -349,26 +345,22 @@ class DefaultResponseParser extends ResponseParser {
     int totalPage = int.tryParse((map["totalPage"] ?? 0).toString()) ?? 0;
     int totalCount = int.tryParse((map["totalCount"] ?? 0).toString()) ?? 0;
     List<dynamic>? mapDataList = map["data"];
-    List<BaseResourceModel> resourceList = [];
+    List<T> resourceList = [];
     if (mapDataList != null && mapDataList.isNotEmpty) {
       try {
         for (dynamic map in mapDataList) {
           Map<String, dynamic> dataMap = {};
-          if (map is Map<String, dynamic>) {
-            dataMap = map;
-          } else if (map is Map<dynamic, dynamic>) {
-            for (var entry in map.entries) {
-              dataMap[entry.key.toString()] = entry.value;
-            }
-          } else {
+          try {
+            dataMap = DataTypeConvertUtils.toMapStrDyMap(map);
+          } catch (e1) {
             throw Exception(
-              "数据不是有效的List<Map<dynamic, dynamic>>或List<Map<String, dynamic>>格式，请自定义js方法转换",
+              "数据不是有效的List<Map<dynamic, dynamic>>或List<Map<String, dynamic>>格式，请自定义js方法转换：$e1",
             );
           }
-          resourceList.add(BaseResourceModel.fromJson(dataMap));
+          resourceList.add(fromJson(dataMap));
         }
       } catch (e) {
-        return PageModel<BaseResourceModel>(
+        return PageModel<T>(
           page: page,
           pageSize: pageSize,
           totalPage: totalPage,
@@ -378,7 +370,7 @@ class DefaultResponseParser extends ResponseParser {
         );
       }
     } else {
-      return PageModel<BaseResourceModel>(
+      return PageModel<T>(
         page: page,
         pageSize: pageSize,
         totalPage: totalPage,
@@ -388,7 +380,7 @@ class DefaultResponseParser extends ResponseParser {
         msg: ResponseParseStatusCodeEnum.dataNull.name,
       );
     }
-    return PageModel<BaseResourceModel>(
+    return PageModel<T>(
       page: page,
       pageSize: pageSize,
       totalPage: totalPage,

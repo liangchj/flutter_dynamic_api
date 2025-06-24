@@ -1,6 +1,5 @@
 library;
 
-export 'models/base_resource_model.dart';
 export 'models/api_config_model.dart';
 export 'models/api_base_model.dart';
 export 'models/net_api_model.dart';
