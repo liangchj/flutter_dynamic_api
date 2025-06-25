@@ -242,7 +242,7 @@ class DefaultResponseParser<T> implements ResponseParser<T> {
       }
       if (responseParamsModel.resultKeyMap.isNotEmpty) {
         for (var entry in responseParamsModel.resultKeyMap.entries) {
-          dataMap[entry.key] = map[entry.value];
+          dataMap[entry.key] = dataMap[entry.value];
         }
         resultMap["data"] = dataMap;
       }
@@ -282,7 +282,7 @@ class DefaultResponseParser<T> implements ResponseParser<T> {
         }
         for (var item in resultMap['data']) {
           if (item != null && item is Map) {
-            item[entry.key] = map[entry.value];
+            item[entry.key] = item[entry.value];
           }
         }
       }
