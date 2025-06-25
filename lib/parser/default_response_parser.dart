@@ -242,7 +242,7 @@ class DefaultResponseParser<T> implements ResponseParser<T> {
       }
       if (responseParamsModel.resultKeyMap.isNotEmpty) {
         for (var entry in responseParamsModel.resultKeyMap.entries) {
-          resultMap[entry.key] = map[entry.value];
+          dataMap[entry.key] = map[entry.value];
         }
         resultMap["data"] = dataMap;
       }
@@ -275,12 +275,16 @@ class DefaultResponseParser<T> implements ResponseParser<T> {
       }
       resultMap[key] = map[keyMap[key]] ?? 0;
     }
-    if (keyMap.isNotEmpty) {
+    if (keyMap.isNotEmpty && data.isNotEmpty) {
       for (var entry in keyMap.entries) {
         if (pageKeyList.contains(entry.key)) {
           continue;
         }
-        resultMap[entry.key] = map[entry.value];
+        for (var item in resultMap['data']) {
+          if (item != null && item is Map) {
+            item[entry.key] = map[entry.value];
+          }
+        }
       }
     }
 
