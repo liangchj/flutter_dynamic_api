@@ -48,6 +48,9 @@ class NetApiModel {
   /// 过滤请求
   final List<FilterCriteriaModel>? filterCriteriaList;
 
+  /// 扩展信息
+  final Map<String, dynamic>? extendMap;
+
   NetApiModel({
     required this.path,
     this.useBaseUrl = true,
@@ -57,6 +60,7 @@ class NetApiModel {
     required this.requestParams,
     required this.responseParams,
     this.filterCriteriaList,
+    this.extendMap,
   });
 
   factory NetApiModel.fromJson(Map<String, dynamic> map) {
@@ -120,6 +124,10 @@ class NetApiModel {
       filterCriteriaList: filterCriteriaList == null
           ? null
           : filterCriteriaModelListFromListJson(filterCriteriaList),
+      extendMap: JsonToModelUtils.getMapStrToTFromJson<dynamic>(
+        map,
+        "extendMap",
+      ),
     );
   }
 
@@ -134,6 +142,7 @@ class NetApiModel {
     "filterCriteriaList": filterCriteriaList == null
         ? null
         : filterCriteriaModelListToJson(filterCriteriaList!),
+    "extendMap": extendMap,
   };
 
   // 验证方法
@@ -211,6 +220,26 @@ class NetApiModel {
       validateResult: validateResult,
       converter: (value) =>
           filterCriteriaFieldTypeValidateAndConvert(value, validateResult),
+    );
+
+    JsonToModelUtils.validateField<Map<String, dynamic>?>(
+      map,
+      apiKeyDescModel: extendMapField,
+      validateResult: validateResult,
+      converter: (value) {
+        if (value is Map<String, dynamic>? || value is Map<String, dynamic>) {
+          return true;
+        }
+        // 尝试转换类型
+        try {
+          DataTypeConvertUtils.toMapStrDyMap(value);
+        } catch (e) {
+          validateResult.msgMap[extendMapField.key] =
+              "${extendMapField.desc}（${extendMapField.key}）数据转换时报错：$e";
+          return false;
+        }
+        return true;
+      },
     );
 
     if (validateResult.flag) {
@@ -350,6 +379,12 @@ class NetApiModel {
   static final ApiKeyDescModel filterCriteriaListField = ApiKeyDescModel(
     key: "filterCriteriaList",
     desc: "过滤请求列表",
+    isRequired: false,
+  );
+
+  static final ApiKeyDescModel extendMapField = ApiKeyDescModel(
+    key: "extendMap",
+    desc: "扩展信息",
     isRequired: false,
   );
 }
