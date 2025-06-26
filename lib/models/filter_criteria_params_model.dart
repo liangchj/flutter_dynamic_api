@@ -36,7 +36,7 @@ class FilterCriteriaParamsModel {
   FilterCriteriaParamsModel({
     required this.value,
     required this.label,
-    required this.parentValue,
+    this.parentValue,
   });
 
   factory FilterCriteriaParamsModel.fromJson(Map<String, dynamic> map) {
