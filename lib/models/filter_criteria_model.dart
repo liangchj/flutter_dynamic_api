@@ -45,7 +45,7 @@ class FilterCriteriaModel {
   final NetApiModel? netApi;
 
   /// 直接指定的列表
-  final List<FilterCriteriaParamsModel>? filterCriteriaParamsList;
+  List<FilterCriteriaParamsModel>? filterCriteriaParamsList;
 
   FilterCriteriaModel({
     required this.enName,
