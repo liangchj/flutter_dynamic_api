@@ -22,14 +22,36 @@ class ApiConfigModel {
     if (validateResult.msgMap.isNotEmpty) {
       throw Exception(validateResult.msgMap);
     }
+    List<String> errorList = [];
+    var apiBaseModelVar = map["apiBaseModel"];
+    Map<String, dynamic> apiBaseMap = {};
+    if (apiBaseModelVar != null) {
+      try {
+        apiBaseMap.addAll(DataTypeConvertUtils.toMapStrDyMap(apiBaseModelVar));
+      } catch (e) {
+        errorList.add("读取配置apiBaseModel转换类型时报错：$e");
+      }
+    }
+
     var netApiMap = map["netApiMap"];
     Map<String, NetApiModel> netApiModelMap = {};
-    for (var entry in netApiMap.entries) {
-      var netApiModel = NetApiModel.fromJson(entry.value);
-      netApiModelMap[entry.key] = netApiModel;
+    if (netApiMap != null) {
+      try {
+        Map<String, Map<String, dynamic>> dataMap =
+            DataTypeConvertUtils.toMapStrMapStrDyMap(netApiMap);
+        for (var entry in dataMap.entries) {
+          var netApiModel = NetApiModel.fromJson(entry.value);
+          netApiModelMap[entry.key] = netApiModel;
+        }
+      } catch (e) {
+        errorList.add("读取配置netApiMap转换类型时报错：$e");
+      }
+    }
+    if (errorList.isNotEmpty) {
+      throw Exception(errorList.join("\n"));
     }
     return ApiConfigModel(
-      apiBaseModel: ApiBaseModel.fromJson(map["apiBaseModel"]),
+      apiBaseModel: ApiBaseModel.fromJson(apiBaseMap),
       netApiMap: netApiModelMap,
     );
   }
@@ -69,7 +91,7 @@ class ApiConfigModel {
     /// 验证api基本信息字段
     JsonToModelUtils.validateField<ApiBaseModel>(
       map,
-      apiKeyDescModel: apiBaseModelKey,
+      apiKeyDescModel: apiBaseModelField,
       validateResult: validateResult,
       converter: (value) =>
           apiBaseFieldTypeValidateAndConvert(value, validateResult),
@@ -78,7 +100,7 @@ class ApiConfigModel {
     /// 验证网络api字段
     JsonToModelUtils.validateField<Map<String, NetApiModel>>(
       map,
-      apiKeyDescModel: netApiMapKey,
+      apiKeyDescModel: netApiMapField,
       validateResult: validateResult,
       converter: (value) =>
           netApiFieldTypeValidateAndConvert(value, validateResult),
@@ -121,8 +143,8 @@ class ApiConfigModel {
             dataMap.addAll(DataTypeConvertUtils.toMapStrDyMap(entry.value));
           } catch (e) {
             flag = false;
-            validateResult.msgMap[netApiMapKey.key] =
-                "${netApiMapKey.desc}（${netApiMapKey.key}）数据转换时报错：$e";
+            validateResult.msgMap[netApiMapField.key] =
+                "${netApiMapField.desc}（${netApiMapField.key}）数据转换时报错：$e";
             return false;
           }
         }
@@ -132,12 +154,13 @@ class ApiConfigModel {
           flag = false;
         }
       }
-      validateResult.childValidateResultMap[netApiMapKey.key] = netApiResultMap;
+      validateResult.childValidateResultMap[netApiMapField.key] =
+          netApiResultMap;
       return flag;
     }
 
-    validateResult.msgMap[apiBaseModelKey.key] =
-        "${apiBaseModelKey.desc}（${apiBaseModelKey.key}）从json中获取到的数据不是有效的格式";
+    validateResult.msgMap[apiBaseModelField.key] =
+        "${apiBaseModelField.desc}（${apiBaseModelField.key}）从json中获取到的数据不是有效的格式";
     return false;
   }
 
@@ -155,29 +178,29 @@ class ApiConfigModel {
       try {
         dataMap.addAll(DataTypeConvertUtils.toMapStrDyMap(value));
       } catch (e) {
-        validateResult.msgMap[apiBaseModelKey.key] =
-            "${apiBaseModelKey.desc}（${apiBaseModelKey.key}）转换数据时报错：$e";
+        validateResult.msgMap[apiBaseModelField.key] =
+            "${apiBaseModelField.desc}（${apiBaseModelField.key}）转换数据时报错：$e";
         return false;
       }
     }
     if (dataMap.isEmpty) {
-      validateResult.msgMap[apiBaseModelKey.key] =
-          "${apiBaseModelKey.desc}（${apiBaseModelKey.key}）从json中获取到的数据不是有效的格式";
+      validateResult.msgMap[apiBaseModelField.key] =
+          "${apiBaseModelField.desc}（${apiBaseModelField.key}）从json中获取到的数据不是有效的格式";
       return false;
     }
     var result = ApiBaseModel.validateField(dataMap);
-    validateResult.childValidateResultMap[apiBaseModelKey.key] = {
-      apiBaseModelKey.key: result,
+    validateResult.childValidateResultMap[apiBaseModelField.key] = {
+      apiBaseModelField.key: result,
     };
     return result.flag;
   }
 
-  static final ApiKeyDescModel apiBaseModelKey = ApiKeyDescModel(
+  static final ApiKeyDescModel apiBaseModelField = ApiKeyDescModel(
     key: "apiBaseModel",
     desc: "api基本信息",
     isRequired: true,
   );
-  static final ApiKeyDescModel netApiMapKey = ApiKeyDescModel(
+  static final ApiKeyDescModel netApiMapField = ApiKeyDescModel(
     key: "netApiMap",
     desc: "具体请求的api配置",
     isRequired: true,

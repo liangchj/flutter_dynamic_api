@@ -19,7 +19,7 @@ class ResponseParamsModel {
   final String resDataKey;
 
   /// 响应说明信息
-  final String? resMsg;
+  final String? resMsgKey;
 
   /// 响应结果映射key
   final Map<String, String> resultKeyMap;
@@ -32,7 +32,7 @@ class ResponseParamsModel {
     required this.statusCodeKey,
     required this.successStatusCode,
     required this.resDataKey,
-    required this.resMsg,
+    required this.resMsgKey,
     required this.resultKeyMap,
     required this.resultConvertJsFn,
   });
@@ -46,7 +46,7 @@ class ResponseParamsModel {
       statusCodeKey: map["statusCodeKey"],
       successStatusCode: map["successStatusCode"],
       resDataKey: map["resDataKey"],
-      resMsg: map["resMsg"],
+      resMsgKey: map["resMsgKey"],
       resultKeyMap:
           JsonToModelUtils.getMapStrToTFromJson<String>(map, "resultKeyMap") ??
           {},
@@ -58,7 +58,7 @@ class ResponseParamsModel {
     "statusCodeKey": statusCodeKey,
     "successStatusCode": successStatusCode,
     "resDataKey": resDataKey,
-    "resMsg": resMsg,
+    "resMsgKey": resMsgKeyField,
     "resultKeyMap": json.encode(resultKeyMap),
     "resultConvertJsFn": resultConvertJsFn,
   };
@@ -89,31 +89,31 @@ class ResponseParamsModel {
 
     JsonToModelUtils.validateFieldStr(
       map,
-      apiKeyDescModel: statusCodeKeyKey,
+      apiKeyDescModel: statusCodeKeyField,
       validateResult: validateResult,
     );
 
     JsonToModelUtils.validateFieldStr(
       map,
-      apiKeyDescModel: apiBaseModelKey,
+      apiKeyDescModel: apiBaseModelField,
       validateResult: validateResult,
     );
 
     JsonToModelUtils.validateFieldStr(
       map,
-      apiKeyDescModel: resDataKeyKey,
+      apiKeyDescModel: resDataKeyField,
       validateResult: validateResult,
     );
 
     JsonToModelUtils.validateFieldStr(
       map,
-      apiKeyDescModel: resMsgKey,
+      apiKeyDescModel: resMsgKeyField,
       validateResult: validateResult,
     );
 
     JsonToModelUtils.validateField<Map<String, String>>(
       map,
-      apiKeyDescModel: resultKeyMapKey,
+      apiKeyDescModel: resultKeyMapField,
       validateResult: validateResult,
       converter: (value) {
         if (value is Map<String, String>) {
@@ -123,8 +123,8 @@ class ResponseParamsModel {
         try {
           DataTypeConvertUtils.toMapStrDyMap(value);
         } catch (e) {
-          validateResult.msgMap[resultKeyMapKey.key] =
-              "${resultKeyMapKey.desc}（${resultKeyMapKey.key}）数据转换时报错：$e";
+          validateResult.msgMap[resultKeyMapField.key] =
+              "${resultKeyMapField.desc}（${resultKeyMapField.key}）数据转换时报错：$e";
           return false;
         }
         return true;
@@ -133,7 +133,7 @@ class ResponseParamsModel {
 
     JsonToModelUtils.validateFieldStr(
       map,
-      apiKeyDescModel: resultConvertJsFnKey,
+      apiKeyDescModel: resultConvertJsFnField,
       validateResult: validateResult,
     );
 
@@ -143,32 +143,32 @@ class ResponseParamsModel {
     return validateResult;
   }
 
-  static final ApiKeyDescModel statusCodeKeyKey = ApiKeyDescModel(
+  static final ApiKeyDescModel statusCodeKeyField = ApiKeyDescModel(
     key: "statusCodeKey",
     desc: "响应状态码key",
     isRequired: true,
   );
-  static final ApiKeyDescModel apiBaseModelKey = ApiKeyDescModel(
+  static final ApiKeyDescModel apiBaseModelField = ApiKeyDescModel(
     key: "successStatusCode",
     desc: "响应成功状态码",
     isRequired: true,
   );
-  static final ApiKeyDescModel resDataKeyKey = ApiKeyDescModel(
+  static final ApiKeyDescModel resDataKeyField = ApiKeyDescModel(
     key: "resDataKey",
     desc: "响应读取值的key",
     isRequired: true,
   );
-  static final ApiKeyDescModel resMsgKey = ApiKeyDescModel(
-    key: "resMsg",
+  static final ApiKeyDescModel resMsgKeyField = ApiKeyDescModel(
+    key: "resMsgKey",
     desc: "响应说明信息",
     isRequired: false,
   );
-  static final ApiKeyDescModel resultKeyMapKey = ApiKeyDescModel(
+  static final ApiKeyDescModel resultKeyMapField = ApiKeyDescModel(
     key: "resultKeyMap",
     desc: "响应结果映射key",
     isRequired: false,
   );
-  static final ApiKeyDescModel resultConvertJsFnKey = ApiKeyDescModel(
+  static final ApiKeyDescModel resultConvertJsFnField = ApiKeyDescModel(
     key: "resultConvertJsFn",
     desc: "用于将结果转换为需要的数据结构的js方法",
     isRequired: false,

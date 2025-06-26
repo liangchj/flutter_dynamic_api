@@ -45,7 +45,7 @@ class FilterCriteriaModel {
   final NetApiModel? netApi;
 
   /// 直接指定的列表
-  final List<FilterCriteriaParamsModel>? filterCriteriaParamsList;
+  List<FilterCriteriaParamsModel>? filterCriteriaParamsList;
 
   FilterCriteriaModel({
     required this.enName,
@@ -61,17 +61,40 @@ class FilterCriteriaModel {
     if (validateResult.msgMap.isNotEmpty) {
       throw Exception(validateResult.msgMap);
     }
+    List<String> errorList = [];
     var multiples = map["multiples"];
-    var netApi = map["netApi"];
-    var filterCriteriaParamsList = map["filterCriteriaParamsList"];
+    var netApiVar = map["netApi"];
+    Map<String, dynamic>? netApiMap;
+    if (netApiVar != null) {
+      try {
+        netApiMap = DataTypeConvertUtils.toMapStrDyMap(netApiVar);
+      } catch (e) {
+        errorList.add("读取配置netApi转换类型时报错：$e");
+      }
+    }
 
+    var filterCriteriaParamsListVar = map["filterCriteriaParamsList"];
+    List<Map<String, dynamic>>? filterCriteriaParamsList;
+    if (filterCriteriaParamsListVar != null) {
+      try {
+        filterCriteriaParamsList = DataTypeConvertUtils.toListMapStrDyMap(
+          filterCriteriaParamsListVar,
+        );
+      } catch (e) {
+        errorList.add("读取配置filterCriteriaParamsList转换类型时报错：$e");
+      }
+    }
+    if (errorList.isNotEmpty) {
+      throw Exception(errorList.join("\n"));
+    }
     return FilterCriteriaModel(
       enName: map["enName"],
       name: map["name"],
       requestKey: map["requestKey"],
-      requestValueConvertJsFn: map["requestValueConvertJsFn"],
+      requestValueConvertJsFn: (map["requestValueConvertJsFn"] ?? "")
+          .toString(),
       multiples: multiples == null ? false : bool.tryParse(multiples) ?? false,
-      netApi: netApi == null ? null : NetApiModel.fromJson(netApi),
+      netApi: netApiMap == null ? null : NetApiModel.fromJson(netApiMap),
       filterCriteriaParamsList: filterCriteriaParamsList == null
           ? null
           : filterCriteriaParamsModelListFromListJson(filterCriteriaParamsList),
@@ -116,37 +139,37 @@ class FilterCriteriaModel {
 
     JsonToModelUtils.validateFieldStr(
       map,
-      apiKeyDescModel: enNameKey,
+      apiKeyDescModel: enNameField,
       validateResult: validateResult,
     );
 
     JsonToModelUtils.validateFieldStr(
       map,
-      apiKeyDescModel: nameKey,
+      apiKeyDescModel: nameField,
       validateResult: validateResult,
     );
 
     JsonToModelUtils.validateFieldStr(
       map,
-      apiKeyDescModel: requestKeyKey,
+      apiKeyDescModel: requestKeyField,
       validateResult: validateResult,
     );
 
     JsonToModelUtils.validateFieldStr(
       map,
-      apiKeyDescModel: requestValueConvertJsFnKey,
+      apiKeyDescModel: requestValueConvertJsFnField,
       validateResult: validateResult,
     );
 
     JsonToModelUtils.validateFieldBool(
       map,
-      apiKeyDescModel: multiplesKey,
+      apiKeyDescModel: multiplesField,
       validateResult: validateResult,
     );
 
     JsonToModelUtils.validateField<NetApiModel>(
       map,
-      apiKeyDescModel: netApiKey,
+      apiKeyDescModel: netApiField,
       validateResult: validateResult,
       converter: (value) =>
           netApiFieldTypeValidateAndConvert(value, validateResult),
@@ -154,7 +177,7 @@ class FilterCriteriaModel {
 
     JsonToModelUtils.validateField<List<FilterCriteriaParamsModel>?>(
       map,
-      apiKeyDescModel: filterCriteriaParamsListKey,
+      apiKeyDescModel: filterCriteriaParamsListField,
       validateResult: validateResult,
       converter: (value) => filterCriteriaParamsListFieldTypeValidateAndConvert(
         value,
@@ -184,14 +207,14 @@ class FilterCriteriaModel {
       try {
         dataMap.addAll(DataTypeConvertUtils.toMapStrDyMap(value));
       } catch (e) {
-        validateResult.msgMap[netApiKey.key] =
-            "${netApiKey.desc}（${netApiKey.key}）数据转换时报错：$e";
+        validateResult.msgMap[netApiField.key] =
+            "${netApiField.desc}（${netApiField.key}）数据转换时报错：$e";
         return false;
       }
     }
     var result = NetApiModel.validateField(dataMap);
-    validateResult.childValidateResultMap[netApiKey.key] = {
-      netApiKey.key: result,
+    validateResult.childValidateResultMap[netApiField.key] = {
+      netApiField.key: result,
     };
     return result.flag;
   }
@@ -218,8 +241,8 @@ class FilterCriteriaModel {
         list.addAll(DataTypeConvertUtils.toListMapStrDyMap(value));
       } catch (e) {
         flag = false;
-        validateResult.msgMap[filterCriteriaParamsListKey.key] =
-            "${filterCriteriaParamsListKey.desc}（${filterCriteriaParamsListKey.key}）数据转换时报错：$e";
+        validateResult.msgMap[filterCriteriaParamsListField.key] =
+            "${filterCriteriaParamsListField.desc}（${filterCriteriaParamsListField.key}）数据转换时报错：$e";
         return false;
       }
     }
@@ -234,42 +257,42 @@ class FilterCriteriaModel {
         flag = false;
       }
     }
-    validateResult.childValidateResultMap[filterCriteriaParamsListKey.key] =
+    validateResult.childValidateResultMap[filterCriteriaParamsListField.key] =
         filterCriteriaParamsResultMap;
     return flag;
   }
 
-  static final ApiKeyDescModel enNameKey = ApiKeyDescModel(
+  static final ApiKeyDescModel enNameField = ApiKeyDescModel(
     key: "enName",
     desc: "英文名称",
     isRequired: true,
   );
-  static final ApiKeyDescModel nameKey = ApiKeyDescModel(
+  static final ApiKeyDescModel nameField = ApiKeyDescModel(
     key: "name",
     desc: "中文名称",
     isRequired: true,
   );
-  static final ApiKeyDescModel requestKeyKey = ApiKeyDescModel(
+  static final ApiKeyDescModel requestKeyField = ApiKeyDescModel(
     key: "requestKey",
     desc: "请求的key",
     isRequired: true,
   );
-  static final ApiKeyDescModel requestValueConvertJsFnKey = ApiKeyDescModel(
+  static final ApiKeyDescModel requestValueConvertJsFnField = ApiKeyDescModel(
     key: "requestValueConvertJsFn",
     desc: "用于将请求参数转换为需要的数据结构的js方法",
     isRequired: false,
   );
-  static final ApiKeyDescModel multiplesKey = ApiKeyDescModel(
+  static final ApiKeyDescModel multiplesField = ApiKeyDescModel(
     key: "multiples",
     desc: "是否可以传入多个",
     isRequired: false,
   );
-  static final ApiKeyDescModel netApiKey = ApiKeyDescModel(
+  static final ApiKeyDescModel netApiField = ApiKeyDescModel(
     key: "netApi",
     desc: "从网络中请求",
     isRequired: false,
   );
-  static final ApiKeyDescModel filterCriteriaParamsListKey = ApiKeyDescModel(
+  static final ApiKeyDescModel filterCriteriaParamsListField = ApiKeyDescModel(
     key: "filterCriteriaParamsList",
     desc: "直接指定的列表",
     isRequired: false,

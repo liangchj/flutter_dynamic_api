@@ -48,6 +48,9 @@ class NetApiModel {
   /// 过滤请求
   final List<FilterCriteriaModel>? filterCriteriaList;
 
+  /// 扩展信息
+  final Map<String, dynamic>? extendMap;
+
   NetApiModel({
     required this.path,
     this.useBaseUrl = true,
@@ -57,6 +60,7 @@ class NetApiModel {
     required this.requestParams,
     required this.responseParams,
     this.filterCriteriaList,
+    this.extendMap,
   });
 
   factory NetApiModel.fromJson(Map<String, dynamic> map) {
@@ -64,11 +68,49 @@ class NetApiModel {
     if (validateResult.msgMap.isNotEmpty) {
       throw Exception(validateResult.msgMap);
     }
+    List<String> errorList = [];
     var useBaseUrl = map["useBaseUrl"];
     var useWebView = map["useWebView"];
     var usePost = map["usePost"];
     var userAgent = map["userAgent"];
-    var filterCriteriaList = map["filterCriteriaList"];
+
+    var requestParamsVar = map["requestParams"];
+    Map<String, dynamic> requestParamsMap = {};
+    if (requestParamsVar != null) {
+      try {
+        requestParamsMap.addAll(
+          DataTypeConvertUtils.toMapStrDyMap(requestParamsVar),
+        );
+      } catch (e) {
+        errorList.add("读取配置requestParams转换类型时报错：$e");
+      }
+    }
+
+    var responseParamsVar = map["responseParams"];
+    Map<String, dynamic> responseParamsMap = {};
+    if (responseParamsVar != null) {
+      try {
+        responseParamsMap.addAll(
+          DataTypeConvertUtils.toMapStrDyMap(responseParamsVar),
+        );
+      } catch (e) {
+        errorList.add("读取配置responseParams转换类型时报错：$e");
+      }
+    }
+    var filterCriteriaListVar = map["filterCriteriaList"];
+    List<Map<String, dynamic>>? filterCriteriaList;
+    if (filterCriteriaListVar != null) {
+      try {
+        filterCriteriaList = DataTypeConvertUtils.toListMapStrDyMap(
+          filterCriteriaListVar,
+        );
+      } catch (e) {
+        errorList.add("读取配置filterCriteriaList转换类型时报错：$e");
+      }
+    }
+    if (errorList.isNotEmpty) {
+      throw Exception(errorList.join("\n"));
+    }
     return NetApiModel(
       path: map["path"],
       useBaseUrl: useBaseUrl == null ? true : bool.tryParse(useBaseUrl) ?? true,
@@ -77,11 +119,15 @@ class NetApiModel {
           : bool.tryParse(useWebView) ?? false,
       usePost: usePost == null ? false : bool.tryParse(usePost) ?? false,
       userAgent: userAgent,
-      requestParams: RequestParamsModel.fromJson(map["requestParams"]),
-      responseParams: ResponseParamsModel.fromJson(map["responseParams"]),
+      requestParams: RequestParamsModel.fromJson(requestParamsMap),
+      responseParams: ResponseParamsModel.fromJson(responseParamsMap),
       filterCriteriaList: filterCriteriaList == null
           ? null
           : filterCriteriaModelListFromListJson(filterCriteriaList),
+      extendMap: JsonToModelUtils.getMapStrToTFromJson<dynamic>(
+        map,
+        "extendMap",
+      ),
     );
   }
 
@@ -96,6 +142,7 @@ class NetApiModel {
     "filterCriteriaList": filterCriteriaList == null
         ? null
         : filterCriteriaModelListToJson(filterCriteriaList!),
+    "extendMap": extendMap,
   };
 
   // 验证方法
@@ -124,36 +171,36 @@ class NetApiModel {
 
     JsonToModelUtils.validateFieldStr(
       map,
-      apiKeyDescModel: pathKey,
+      apiKeyDescModel: pathField,
       validateResult: validateResult,
     );
     JsonToModelUtils.validateFieldBool(
       map,
-      apiKeyDescModel: useBaseUrlKey,
-      validateResult: validateResult,
-    );
-
-    JsonToModelUtils.validateFieldBool(
-      map,
-      apiKeyDescModel: useWebViewKey,
+      apiKeyDescModel: useBaseUrlField,
       validateResult: validateResult,
     );
 
     JsonToModelUtils.validateFieldBool(
       map,
-      apiKeyDescModel: usePostKey,
+      apiKeyDescModel: useWebViewField,
       validateResult: validateResult,
     );
 
     JsonToModelUtils.validateFieldBool(
       map,
-      apiKeyDescModel: userAgentKey,
+      apiKeyDescModel: usePostField,
+      validateResult: validateResult,
+    );
+
+    JsonToModelUtils.validateFieldBool(
+      map,
+      apiKeyDescModel: userAgentField,
       validateResult: validateResult,
     );
 
     JsonToModelUtils.validateField<RequestParamsModel>(
       map,
-      apiKeyDescModel: requestParamsKey,
+      apiKeyDescModel: requestParamsField,
       validateResult: validateResult,
       converter: (value) =>
           requestParamsFieldTypeValidateAndConvert(value, validateResult),
@@ -161,7 +208,7 @@ class NetApiModel {
 
     JsonToModelUtils.validateField<ResponseParamsModel>(
       map,
-      apiKeyDescModel: responseParamsKey,
+      apiKeyDescModel: responseParamsField,
       validateResult: validateResult,
       converter: (value) =>
           responseParamsFieldTypeValidateAndConvert(value, validateResult),
@@ -169,10 +216,30 @@ class NetApiModel {
 
     JsonToModelUtils.validateField<List<FilterCriteriaModel>?>(
       map,
-      apiKeyDescModel: filterCriteriaListKey,
+      apiKeyDescModel: filterCriteriaListField,
       validateResult: validateResult,
       converter: (value) =>
           filterCriteriaFieldTypeValidateAndConvert(value, validateResult),
+    );
+
+    JsonToModelUtils.validateField<Map<String, dynamic>?>(
+      map,
+      apiKeyDescModel: extendMapField,
+      validateResult: validateResult,
+      converter: (value) {
+        if (value is Map<String, dynamic>? || value is Map<String, dynamic>) {
+          return true;
+        }
+        // 尝试转换类型
+        try {
+          DataTypeConvertUtils.toMapStrDyMap(value);
+        } catch (e) {
+          validateResult.msgMap[extendMapField.key] =
+              "${extendMapField.desc}（${extendMapField.key}）数据转换时报错：$e";
+          return false;
+        }
+        return true;
+      },
     );
 
     if (validateResult.flag) {
@@ -195,13 +262,13 @@ class NetApiModel {
     try {
       dataMap.addAll(DataTypeConvertUtils.toMapStrDyMap(value));
     } catch (e) {
-      validateResult.msgMap[requestParamsKey.key] =
-          "${requestParamsKey.desc}（${requestParamsKey.key}）转换数据时报错：$e";
+      validateResult.msgMap[requestParamsField.key] =
+          "${requestParamsField.desc}（${requestParamsField.key}）转换数据时报错：$e";
       return false;
     }
     var result = RequestParamsModel.validateField(dataMap);
-    validateResult.childValidateResultMap[requestParamsKey.key] = {
-      requestParamsKey.key: result,
+    validateResult.childValidateResultMap[requestParamsField.key] = {
+      requestParamsField.key: result,
     };
     return result.flag;
   }
@@ -220,13 +287,13 @@ class NetApiModel {
     try {
       dataMap.addAll(DataTypeConvertUtils.toMapStrDyMap(value));
     } catch (e) {
-      validateResult.msgMap[responseParamsKey.key] =
-          "${responseParamsKey.desc}（${responseParamsKey.key}）转换数据时报错：$e";
+      validateResult.msgMap[responseParamsField.key] =
+          "${responseParamsField.desc}（${responseParamsField.key}）转换数据时报错：$e";
       return false;
     }
     var result = ResponseParamsModel.validateField(dataMap);
-    validateResult.childValidateResultMap[responseParamsKey.key] = {
-      responseParamsKey.key: result,
+    validateResult.childValidateResultMap[responseParamsField.key] = {
+      responseParamsField.key: result,
     };
     return result.flag;
   }
@@ -243,7 +310,7 @@ class NetApiModel {
     }
     bool flag = true;
     List<Map<String, dynamic>> list = [];
-    if(value is List<FilterCriteriaModel>?) {
+    if (value is List<FilterCriteriaModel>?) {
       return true;
     }
     if (value is List<Map<String, dynamic>>) {
@@ -256,8 +323,8 @@ class NetApiModel {
         list.addAll(DataTypeConvertUtils.toListMapStrDyMap(value));
       } catch (e) {
         flag = false;
-        validateResult.msgMap[filterCriteriaListKey.key] =
-            "${filterCriteriaListKey.desc}（${filterCriteriaListKey.key}）数据转换时报错：$e";
+        validateResult.msgMap[filterCriteriaListField.key] =
+            "${filterCriteriaListField.desc}（${filterCriteriaListField.key}）数据转换时报错：$e";
         return false;
       }
     }
@@ -269,49 +336,55 @@ class NetApiModel {
         flag = false;
       }
     }
-    validateResult.childValidateResultMap[filterCriteriaListKey.key] =
+    validateResult.childValidateResultMap[filterCriteriaListField.key] =
         filterCriteriaResultMap;
     return flag;
   }
 
-  static final ApiKeyDescModel pathKey = ApiKeyDescModel(
+  static final ApiKeyDescModel pathField = ApiKeyDescModel(
     key: "path",
     desc: "请求路径",
     isRequired: true,
   );
-  static final ApiKeyDescModel useBaseUrlKey = ApiKeyDescModel(
+  static final ApiKeyDescModel useBaseUrlField = ApiKeyDescModel(
     key: "useBaseUrl",
     desc: "是否使用基本的链接",
     isRequired: false,
   );
-  static final ApiKeyDescModel useWebViewKey = ApiKeyDescModel(
+  static final ApiKeyDescModel useWebViewField = ApiKeyDescModel(
     key: "useWebView",
     desc: "是否使用webView",
     isRequired: false,
   );
-  static final ApiKeyDescModel usePostKey = ApiKeyDescModel(
+  static final ApiKeyDescModel usePostField = ApiKeyDescModel(
     key: "usePost",
     desc: "是否使用post请求",
     isRequired: false,
   );
-  static final ApiKeyDescModel userAgentKey = ApiKeyDescModel(
+  static final ApiKeyDescModel userAgentField = ApiKeyDescModel(
     key: "userAgent",
     desc: "指定代理",
     isRequired: false,
   );
-  static final ApiKeyDescModel requestParamsKey = ApiKeyDescModel(
+  static final ApiKeyDescModel requestParamsField = ApiKeyDescModel(
     key: "requestParams",
     desc: "请求信息",
     isRequired: true,
   );
-  static final ApiKeyDescModel responseParamsKey = ApiKeyDescModel(
+  static final ApiKeyDescModel responseParamsField = ApiKeyDescModel(
     key: "responseParams",
     desc: "响应信息",
     isRequired: true,
   );
-  static final ApiKeyDescModel filterCriteriaListKey = ApiKeyDescModel(
+  static final ApiKeyDescModel filterCriteriaListField = ApiKeyDescModel(
     key: "filterCriteriaList",
     desc: "过滤请求列表",
+    isRequired: false,
+  );
+
+  static final ApiKeyDescModel extendMapField = ApiKeyDescModel(
+    key: "extendMap",
+    desc: "扩展信息",
     isRequired: false,
   );
 }
