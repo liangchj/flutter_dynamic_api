@@ -48,4 +48,20 @@ abstract class ResponseParser<T> {
     dynamic data,
     NetApiModel netApiModel,
   );
+
+  /// 解析单个内容
+  /// 设置了key-value读取数据，使用自定义的Js方法解析
+  /// 结果是json
+  DefaultResponseModel<T> detailParseFromJsonAndJsFn(
+    Map<String, dynamic> map,
+    NetApiModel netApiModel,
+  );
+
+  /// 解析单个内容
+  /// 设置了key-value读取数据，使用自定义的Js方法解析
+  /// 结果是json
+  DefaultResponseModel<T> detailParseFromDynamicAndJsFn(
+    dynamic data,
+    NetApiModel netApiModel,
+  );
 }

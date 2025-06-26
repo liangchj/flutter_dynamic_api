@@ -221,6 +221,104 @@ class DefaultResponseParser<T> implements ResponseParser<T> {
     return detailParseFromJson(dataMap, netApiModel);
   }
 
+  /// 解析单个内容
+  /// 设置了key-value读取数据，使用自定义的Js方法解析
+  /// 结果是json
+  @override
+  DefaultResponseModel<T> detailParseFromJsonAndJsFn(
+    Map<String, dynamic> map,
+    NetApiModel netApiModel,
+  ) {
+    return detailParseFromDynamicAndJsFn(map, netApiModel);
+  }
+
+  /// 解析单个内容
+  /// 设置了key-value读取数据，使用自定义的Js方法解析
+  /// 结果是json
+  @override
+  DefaultResponseModel<T> detailParseFromDynamicAndJsFn(
+    dynamic data,
+    NetApiModel netApiModel,
+  ) {
+    if (data == null) {
+      return DefaultResponseModel<T>(
+        statusCode: ResponseParseStatusCodeEnum.dataNull.code,
+        msg: ResponseParseStatusCodeEnum.dataNull.name,
+      );
+    }
+    if (netApiModel.responseParams.resultConvertJsFn == null ||
+        netApiModel.responseParams.resultConvertJsFn!.isEmpty) {
+      return DefaultResponseModel<T>(
+        statusCode: ResponseParseStatusCodeEnum.jsFnNull.code,
+        msg: ResponseParseStatusCodeEnum.jsFnNull.name,
+      );
+    }
+    if (JsExecuteUtils.flutterJs == null) {
+      JsExecuteUtils.applyGetFlutterJavascriptRuntime();
+    }
+    if (JsExecuteUtils.flutterJs == null) {
+      return DefaultResponseModel<T>(
+        statusCode:
+            ResponseParseStatusCodeEnum.jsRuntimeEnvironmentApplyFail.code,
+        msg: ResponseParseStatusCodeEnum.jsRuntimeEnvironmentApplyFail.name,
+      );
+    }
+
+    /// 编译js方法
+    try {
+      JsExecuteUtils.flutterJs!.evaluate(
+        netApiModel.responseParams.resultConvertJsFn!,
+      );
+    } catch (e) {
+      return DefaultResponseModel<T>(
+        statusCode: ResponseParseStatusCodeEnum.jsFnEvaluateFail.code,
+        msg: "${ResponseParseStatusCodeEnum.jsFnEvaluateFail.name}，$e",
+      );
+    }
+
+    // 将Map转换为JSON字符串
+    String jsonString = json.encode(data);
+
+    /// 拼接js执行方法
+    String jsFnStr = 'convertJson(JSON.parse(\'$jsonString\'))';
+    JsEvalResult? complexResult;
+    try {
+      /// 执行js方法
+      complexResult = JsExecuteUtils.flutterJs!.evaluate(jsFnStr);
+    } catch (e) {
+      return DefaultResponseModel<T>(
+        statusCode: ResponseParseStatusCodeEnum.jsFnExecuteFail.code,
+        msg: "${ResponseParseStatusCodeEnum.jsFnExecuteFail.name}原因，$e",
+      );
+    }
+
+    Map<String, dynamic>? result;
+    dynamic rawResult;
+    try {
+      rawResult = complexResult.rawResult;
+      if (rawResult != null) {
+        result = {};
+        if (rawResult is Map<String, dynamic>) {
+          result = rawResult;
+        } else if (rawResult is Map<dynamic, dynamic>) {
+          for (var entry in rawResult.entries) {
+            result[entry.key.toString()] = entry.value;
+          }
+        }
+      }
+    } catch (e) {
+      return DefaultResponseModel<T>(
+        statusCode: ResponseParseStatusCodeEnum.jsFnResultIsWrong.code,
+        msg:
+            "${ResponseParseStatusCodeEnum.jsFnResultIsWrong.name}，需要返回的是Map<String, dynamic>，实际返回${rawResult?.runtimeType}，请修改自定义的js方法",
+      );
+    }
+    return parseResponseToResponseModel(
+      result ?? {},
+      netApiModel.responseParams,
+    );
+  }
+
   /// 转换生成单个目标json
   /// 结果为单个json
   Map<String, dynamic> convertTargetJsonSingle(

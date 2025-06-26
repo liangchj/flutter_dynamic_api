@@ -1,4 +1,3 @@
-import 'package:flutter_dynamic_api/utils/json_to_model_utils.dart';
 import 'package:flutter_dynamic_api/flutter_dynamic_api.dart';
 
 void main() {
