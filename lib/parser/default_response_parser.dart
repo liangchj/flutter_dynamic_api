@@ -34,6 +34,7 @@ class DefaultResponseParser<T> implements ResponseParser<T> {
         pageSize: 0,
         totalPage: 0,
         totalCount: 0,
+        isEnd: true,
         modelList: null,
         statusCode: ResponseParseStatusCodeEnum.dataNull.code,
         msg: ResponseParseStatusCodeEnum.dataNull.name,
@@ -51,6 +52,7 @@ class DefaultResponseParser<T> implements ResponseParser<T> {
         pageSize: 0,
         totalPage: 0,
         totalCount: 0,
+        isEnd: true,
         statusCode: ResponseParseStatusCodeEnum.parseFail.code,
         msg:
             "${ResponseParseStatusCodeEnum.parseFail.name}，返回的数据不是有效的Map<dynamic, dynamic>或Map<String, dynamic>格式，请自定义js方法转换",
@@ -84,6 +86,7 @@ class DefaultResponseParser<T> implements ResponseParser<T> {
         pageSize: 0,
         totalPage: 0,
         totalCount: 0,
+        isEnd: true,
         modelList: null,
         statusCode: ResponseParseStatusCodeEnum.dataNull.code,
         msg: ResponseParseStatusCodeEnum.dataNull.name,
@@ -96,6 +99,7 @@ class DefaultResponseParser<T> implements ResponseParser<T> {
         pageSize: 0,
         totalPage: 0,
         totalCount: 0,
+        isEnd: true,
         statusCode: ResponseParseStatusCodeEnum.jsFnNull.code,
         msg: ResponseParseStatusCodeEnum.jsFnNull.name,
       );
@@ -109,6 +113,7 @@ class DefaultResponseParser<T> implements ResponseParser<T> {
         pageSize: 0,
         totalPage: 0,
         totalCount: 0,
+        isEnd: true,
         statusCode:
             ResponseParseStatusCodeEnum.jsRuntimeEnvironmentApplyFail.code,
         msg: ResponseParseStatusCodeEnum.jsRuntimeEnvironmentApplyFail.name,
@@ -126,6 +131,7 @@ class DefaultResponseParser<T> implements ResponseParser<T> {
         pageSize: 0,
         totalPage: 0,
         totalCount: 0,
+        isEnd: true,
         statusCode: ResponseParseStatusCodeEnum.jsFnEvaluateFail.code,
         msg: "${ResponseParseStatusCodeEnum.jsFnEvaluateFail.name}，$e",
       );
@@ -146,6 +152,7 @@ class DefaultResponseParser<T> implements ResponseParser<T> {
         pageSize: 0,
         totalPage: 0,
         totalCount: 0,
+        isEnd: true,
         statusCode: ResponseParseStatusCodeEnum.jsFnExecuteFail.code,
         msg: "${ResponseParseStatusCodeEnum.jsFnExecuteFail.name}原因，$e",
       );
@@ -171,6 +178,7 @@ class DefaultResponseParser<T> implements ResponseParser<T> {
         pageSize: 0,
         totalPage: 0,
         totalCount: 0,
+        isEnd: true,
         statusCode: ResponseParseStatusCodeEnum.jsFnResultIsWrong.code,
         msg:
             "${ResponseParseStatusCodeEnum.jsFnResultIsWrong.name}，需要返回的是Map<String, dynamic>，实际返回${rawResult?.runtimeType}，请修改自定义的js方法",
@@ -453,6 +461,7 @@ class DefaultResponseParser<T> implements ResponseParser<T> {
         pageSize: 0,
         totalPage: 0,
         totalCount: 0,
+        isEnd: true,
         statusCode: ResponseParseStatusCodeEnum.error.code,
         msg: resMsg.isEmpty ? ResponseParseStatusCodeEnum.error.name : resMsg,
       );
@@ -482,6 +491,7 @@ class DefaultResponseParser<T> implements ResponseParser<T> {
           pageSize: pageSize,
           totalPage: totalPage,
           totalCount: totalCount,
+          isEnd: true,
           statusCode: ResponseParseStatusCodeEnum.parseFail.code,
           msg: "${ResponseParseStatusCodeEnum.parseFail.name}，$e",
         );
@@ -492,6 +502,7 @@ class DefaultResponseParser<T> implements ResponseParser<T> {
         pageSize: pageSize,
         totalPage: totalPage,
         totalCount: totalCount,
+        isEnd: true,
         modelList: null,
         statusCode: ResponseParseStatusCodeEnum.dataNull.code,
         msg: ResponseParseStatusCodeEnum.dataNull.name,
@@ -502,6 +513,7 @@ class DefaultResponseParser<T> implements ResponseParser<T> {
       pageSize: pageSize,
       totalPage: totalPage,
       totalCount: totalCount,
+      isEnd: page >= totalPage,
       modelList: resourceList,
       statusCode: ResponseParseStatusCodeEnum.success.code,
       msg: ResponseParseStatusCodeEnum.success.name,
