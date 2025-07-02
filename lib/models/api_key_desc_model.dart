@@ -1,7 +1,7 @@
 class ApiKeyDescModel {
   final String key;
   final String desc;
-  final bool isRequired;
+  bool isRequired;
 
   ApiKeyDescModel({
     required this.key,

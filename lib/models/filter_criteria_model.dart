@@ -1,13 +1,12 @@
 import 'dart:convert';
 
-import 'package:flutter_dynamic_api/models/validate_result_model.dart';
-
 import '../utils/data_type_convert_utils.dart';
 import '../utils/json_to_model_utils.dart';
-import '../utils/model_validate_factory_utils.dart';
 import 'api_key_desc_model.dart';
 import 'net_api_model.dart';
 import 'filter_criteria_params_model.dart';
+import 'validate_field_model.dart';
+import 'validate_result_model.dart';
 
 List<FilterCriteriaModel> filterCriteriaModelListFromJsonStr(String str) =>
     List<FilterCriteriaModel>.from(
@@ -24,6 +23,7 @@ String filterCriteriaModelListToJson(List<FilterCriteriaModel> data) =>
     json.encode(List<Map<String, dynamic>>.from(data.map((e) => e.toJson())));
 
 /// 过滤参数配置
+/// 当 从网络中请求[netApi] 和 直接指定的列表[filterCriteriaParamsList] 同时存在时优先使用netApi
 class FilterCriteriaModel {
   /// 英文名称
   final String enName;
@@ -38,7 +38,7 @@ class FilterCriteriaModel {
   /// 因flutter不支持动态，因此 使用js函数
   final String? requestValueConvertJsFn;
 
-  /// 是否可以传入多个
+  /// 是否可以多选
   final bool? multiples;
 
   /// 从网络中请求
@@ -115,186 +115,86 @@ class FilterCriteriaModel {
 
   // 验证方法
   static ValidateResultModel validateField(Map<String, dynamic> map) {
-    if (ModelValidateFactoryUtils.isRegisterFactory<FilterCriteriaModel>()) {
-      ModelValidateFactoryUtils.register<FilterCriteriaModel>(
-        validator: FilterCriteriaModel.validateField,
-        factory: FilterCriteriaModel.fromJson,
-      );
-    }
-    if (ModelValidateFactoryUtils.isRegisterValidator<FilterCriteriaModel>()) {
-      ModelValidateFactoryUtils.registerValidator<FilterCriteriaModel>(
-        FilterCriteriaModel.validateField,
-      );
-    }
-    ValidateResultModel validateResult = ValidateResultModel(
-      key: "filterCriteria",
-      msgMap: {},
-      childValidateResultMap: {},
-    );
-    if (map.isEmpty) {
-      validateResult.msgMap["json"] = "接收传入的json数据为空";
-      validateResult.flag = false;
+    ValidateResultModel validateResult =
+        JsonToModelUtils.baseValidate<FilterCriteriaModel>(
+          map,
+          key: "filterCriteria",
+          fromJson: FilterCriteriaModel.fromJson,
+          validateFieldFn: FilterCriteriaModel.validateField,
+        );
+    if (!validateResult.flag) {
       return validateResult;
     }
 
-    JsonToModelUtils.validateFieldStr(
+    JsonToModelUtils.validateModelJson(
       map,
-      apiKeyDescModel: enNameField,
       validateResult: validateResult,
+      validateFieldList: [
+        ValidateFieldModel<String>(
+          fieldDesc: ApiKeyDescModel(
+            key: "enName",
+            desc: "英文名称",
+            isRequired: true,
+          ),
+          fieldType: "string",
+        ),
+        ValidateFieldModel<String>(
+          fieldDesc: ApiKeyDescModel(
+            key: "name",
+            desc: "中文名称",
+            isRequired: true,
+          ),
+          fieldType: "string",
+        ),
+        ValidateFieldModel<String>(
+          fieldDesc: ApiKeyDescModel(
+            key: "requestKey",
+            desc: "请求的key",
+            isRequired: true,
+          ),
+          fieldType: "string",
+        ),
+        ValidateFieldModel<String?>(
+          fieldDesc: ApiKeyDescModel(
+            key: "requestValueConvertJsFn",
+            desc: "用于将请求参数转换为需要的数据结构的js方法",
+            isRequired: false,
+          ),
+          fieldType: "string",
+        ),
+        ValidateFieldModel<bool?>(
+          fieldDesc: ApiKeyDescModel(
+            key: "multiples",
+            desc: "是否可以多选",
+            isRequired: false,
+          ),
+          fieldType: "bool",
+        ),
+
+        ValidateFieldModel<NetApiModel>(
+          fieldDesc: ApiKeyDescModel(
+            key: "netApi",
+            desc: "从网络中请求",
+            isRequired: false,
+          ),
+          fieldType: "class",
+          fromJson: NetApiModel.fromJson,
+          validateField: NetApiModel.validateField,
+        ),
+
+        ValidateFieldModel<FilterCriteriaParamsModel>(
+          fieldDesc: ApiKeyDescModel(
+            key: "filterCriteriaParamsList",
+            desc: "直接指定的列表",
+            isRequired: false,
+          ),
+          fieldType: "classList",
+          fromJson: FilterCriteriaParamsModel.fromJson,
+          validateField: FilterCriteriaParamsModel.validateField,
+        ),
+      ],
     );
 
-    JsonToModelUtils.validateFieldStr(
-      map,
-      apiKeyDescModel: nameField,
-      validateResult: validateResult,
-    );
-
-    JsonToModelUtils.validateFieldStr(
-      map,
-      apiKeyDescModel: requestKeyField,
-      validateResult: validateResult,
-    );
-
-    JsonToModelUtils.validateFieldStr(
-      map,
-      apiKeyDescModel: requestValueConvertJsFnField,
-      validateResult: validateResult,
-    );
-
-    JsonToModelUtils.validateFieldBool(
-      map,
-      apiKeyDescModel: multiplesField,
-      validateResult: validateResult,
-    );
-
-    JsonToModelUtils.validateField<NetApiModel>(
-      map,
-      apiKeyDescModel: netApiField,
-      validateResult: validateResult,
-      converter: (value) =>
-          netApiFieldTypeValidateAndConvert(value, validateResult),
-    );
-
-    JsonToModelUtils.validateField<List<FilterCriteriaParamsModel>?>(
-      map,
-      apiKeyDescModel: filterCriteriaParamsListField,
-      validateResult: validateResult,
-      converter: (value) => filterCriteriaParamsListFieldTypeValidateAndConvert(
-        value,
-        validateResult,
-      ),
-    );
-
-    if (validateResult.flag) {
-      validateResult.flag = validateResult.msgMap.isEmpty;
-    }
     return validateResult;
   }
-
-  /// 从网络中请求字段数据类型转换验证
-  static bool netApiFieldTypeValidateAndConvert(
-    value,
-    ValidateResultModel validateResult,
-  ) {
-    if (value is NetApiModel) {
-      return true;
-    }
-    Map<String, dynamic> dataMap = {};
-    if (value is Map<String, dynamic>) {
-      dataMap.addAll(value);
-    } else {
-      // 尝试转换类型
-      try {
-        dataMap.addAll(DataTypeConvertUtils.toMapStrDyMap(value));
-      } catch (e) {
-        validateResult.msgMap[netApiField.key] =
-            "${netApiField.desc}（${netApiField.key}）数据转换时报错：$e";
-        return false;
-      }
-    }
-    var result = NetApiModel.validateField(dataMap);
-    validateResult.childValidateResultMap[netApiField.key] = {
-      netApiField.key: result,
-    };
-    return result.flag;
-  }
-
-  /// 直接指定的列表字段数据类型转换验证
-  static bool filterCriteriaParamsListFieldTypeValidateAndConvert(
-    value,
-    ValidateResultModel validateResult,
-  ) {
-    if (value is List<FilterCriteriaParamsModel> ||
-        value is List<FilterCriteriaParamsModel>?) {
-      return true;
-    }
-    bool flag = true;
-    Map<String, ValidateResultModel> filterCriteriaParamsResultMap = {};
-    List<Map<String, dynamic>> list = [];
-    if (value is List<Map<String, dynamic>>) {
-      list.addAll(value);
-    } else if (value is Map<String, dynamic>) {
-      list.add(value);
-    } else {
-      // 尝试转换类型
-      try {
-        list.addAll(DataTypeConvertUtils.toListMapStrDyMap(value));
-      } catch (e) {
-        flag = false;
-        validateResult.msgMap[filterCriteriaParamsListField.key] =
-            "${filterCriteriaParamsListField.desc}（${filterCriteriaParamsListField.key}）数据转换时报错：$e";
-        return false;
-      }
-    }
-
-    for (int i = 0; i < list.length; i++) {
-      Map<String, dynamic> item = list[i];
-      ValidateResultModel result = FilterCriteriaParamsModel.validateField(
-        item,
-      );
-      filterCriteriaParamsResultMap[i.toString()] = result;
-      if (!result.flag) {
-        flag = false;
-      }
-    }
-    validateResult.childValidateResultMap[filterCriteriaParamsListField.key] =
-        filterCriteriaParamsResultMap;
-    return flag;
-  }
-
-  static final ApiKeyDescModel enNameField = ApiKeyDescModel(
-    key: "enName",
-    desc: "英文名称",
-    isRequired: true,
-  );
-  static final ApiKeyDescModel nameField = ApiKeyDescModel(
-    key: "name",
-    desc: "中文名称",
-    isRequired: true,
-  );
-  static final ApiKeyDescModel requestKeyField = ApiKeyDescModel(
-    key: "requestKey",
-    desc: "请求的key",
-    isRequired: true,
-  );
-  static final ApiKeyDescModel requestValueConvertJsFnField = ApiKeyDescModel(
-    key: "requestValueConvertJsFn",
-    desc: "用于将请求参数转换为需要的数据结构的js方法",
-    isRequired: false,
-  );
-  static final ApiKeyDescModel multiplesField = ApiKeyDescModel(
-    key: "multiples",
-    desc: "是否可以传入多个",
-    isRequired: false,
-  );
-  static final ApiKeyDescModel netApiField = ApiKeyDescModel(
-    key: "netApi",
-    desc: "从网络中请求",
-    isRequired: false,
-  );
-  static final ApiKeyDescModel filterCriteriaParamsListField = ApiKeyDescModel(
-    key: "filterCriteriaParamsList",
-    desc: "直接指定的列表",
-    isRequired: false,
-  );
 }

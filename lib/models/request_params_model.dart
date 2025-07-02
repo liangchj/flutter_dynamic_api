@@ -1,11 +1,9 @@
 import 'dart:convert';
 
-import 'package:flutter_dynamic_api/models/validate_result_model.dart';
-
-import '../utils/data_type_convert_utils.dart';
 import '../utils/json_to_model_utils.dart';
-import '../utils/model_validate_factory_utils.dart';
 import 'api_key_desc_model.dart';
+import 'validate_field_model.dart';
+import 'validate_result_model.dart';
 
 /// 请求参数
 class RequestParamsModel {
@@ -57,105 +55,48 @@ class RequestParamsModel {
 
   // 验证方法
   static ValidateResultModel validateField(Map<String, dynamic> map) {
-    if (ModelValidateFactoryUtils.isRegisterFactory<RequestParamsModel>()) {
-      ModelValidateFactoryUtils.register<RequestParamsModel>(
-        validator: RequestParamsModel.validateField,
-        factory: RequestParamsModel.fromJson,
-      );
-    }
-    if (ModelValidateFactoryUtils.isRegisterValidator<RequestParamsModel>()) {
-      ModelValidateFactoryUtils.registerValidator<RequestParamsModel>(
-        RequestParamsModel.validateField,
-      );
-    }
-    ValidateResultModel validateResult = ValidateResultModel(
-      key: "requestParams",
-      msgMap: {},
-      childValidateResultMap: {},
-    );
-    if (map.isEmpty) {
-      validateResult.msgMap["json"] = "接收传入的json数据为空";
-      validateResult.flag = false;
+    ValidateResultModel validateResult =
+        JsonToModelUtils.baseValidate<RequestParamsModel>(
+          map,
+          key: "requestParams",
+          fromJson: RequestParamsModel.fromJson,
+          validateFieldFn: RequestParamsModel.validateField,
+        );
+    if (!validateResult.flag) {
       return validateResult;
     }
 
-    JsonToModelUtils.validateField<Map<String, dynamic>?>(
+    JsonToModelUtils.validateModelJson(
       map,
-      apiKeyDescModel: headerParamsField,
       validateResult: validateResult,
-      converter: (value) {
-        if (value is Map<String, dynamic>? || value is Map<String, dynamic>) {
-          return true;
-        }
-        // 尝试转换类型
-        try {
-          DataTypeConvertUtils.toMapStrDyMap(value);
-        } catch (e) {
-          validateResult.msgMap[headerParamsField.key] =
-              "${headerParamsField.desc}（${headerParamsField.key}）数据转换时报错：$e";
-          return false;
-        }
-        return true;
-      },
-    );
+      validateFieldList: [
+        ValidateFieldModel<Map<String, dynamic>?>(
+          fieldDesc: ApiKeyDescModel(
+            key: "headerParams",
+            desc: "请求头参数",
+            isRequired: false,
+          ),
+          fieldType: "mapStrTody",
+        ),
 
-    JsonToModelUtils.validateField<Map<String, dynamic>?>(
-      map,
-      apiKeyDescModel: staticParamsField,
-      validateResult: validateResult,
-      converter: (value) {
-        if (value is Map<String, dynamic>? || value is Map<String, dynamic>) {
-          return true;
-        }
-        // 尝试转换类型
-        try {
-          DataTypeConvertUtils.toMapStrDyMap(value);
-        } catch (e) {
-          validateResult.msgMap[staticParamsField.key] =
-              "${staticParamsField.desc}（${staticParamsField.key}）数据转换时报错：$e";
-          return false;
-        }
-        return true;
-      },
+        ValidateFieldModel<Map<String, dynamic>?>(
+          fieldDesc: ApiKeyDescModel(
+            key: "staticParams",
+            desc: "请求静态参数",
+            isRequired: false,
+          ),
+          fieldType: "mapStrTody",
+        ),
+        ValidateFieldModel<Map<String, dynamic>?>(
+          fieldDesc: ApiKeyDescModel(
+            key: "dynamicParams",
+            desc: "请求动态参数",
+            isRequired: false,
+          ),
+          fieldType: "mapStrTody",
+        ),
+      ],
     );
-    JsonToModelUtils.validateField<Map<String, dynamic>?>(
-      map,
-      apiKeyDescModel: dynamicParamsField,
-      validateResult: validateResult,
-      converter: (value) {
-        if (value is Map<String, dynamic>? || value is Map<String, dynamic>) {
-          return true;
-        }
-        // 尝试转换类型
-        try {
-          DataTypeConvertUtils.toMapStrDyMap(value);
-        } catch (e) {
-          validateResult.msgMap[dynamicParamsField.key] =
-              "${dynamicParamsField.desc}（${dynamicParamsField.key}）数据转换时报错：$e";
-          return false;
-        }
-        return true;
-      },
-    );
-    if (validateResult.flag) {
-      validateResult.flag = validateResult.msgMap.isEmpty;
-    }
     return validateResult;
   }
-
-  static final ApiKeyDescModel headerParamsField = ApiKeyDescModel(
-    key: "headerParams",
-    desc: "请求头",
-    isRequired: false,
-  );
-  static final ApiKeyDescModel staticParamsField = ApiKeyDescModel(
-    key: "staticParams",
-    desc: "请求静态参数",
-    isRequired: false,
-  );
-  static final ApiKeyDescModel dynamicParamsField = ApiKeyDescModel(
-    key: "dynamicParams",
-    desc: "请求动态参数",
-    isRequired: false,
-  );
 }

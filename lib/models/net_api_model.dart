@@ -1,14 +1,13 @@
 import 'dart:convert';
 
-import 'package:flutter_dynamic_api/models/validate_result_model.dart';
-
 import '../utils/data_type_convert_utils.dart';
 import '../utils/json_to_model_utils.dart';
-import '../utils/model_validate_factory_utils.dart';
 import 'api_key_desc_model.dart';
 import 'filter_criteria_model.dart';
 import 'request_params_model.dart';
 import 'response_params_model.dart';
+import 'validate_field_model.dart';
+import 'validate_result_model.dart';
 
 List<NetApiModel> netApiModelListFromJsonStr(String str) =>
     List<NetApiModel>.from(
@@ -147,244 +146,103 @@ class NetApiModel {
 
   // 验证方法
   static ValidateResultModel validateField(Map<String, dynamic> map) {
-    if (ModelValidateFactoryUtils.isRegisterFactory<NetApiModel>()) {
-      ModelValidateFactoryUtils.register<NetApiModel>(
-        validator: NetApiModel.validateField,
-        factory: NetApiModel.fromJson,
-      );
-    }
-    if (ModelValidateFactoryUtils.isRegisterValidator<NetApiModel>()) {
-      ModelValidateFactoryUtils.registerValidator<NetApiModel>(
-        NetApiModel.validateField,
-      );
-    }
-    ValidateResultModel validateResult = ValidateResultModel(
-      key: "netApi",
-      msgMap: {},
-      childValidateResultMap: {},
-    );
-    if (map.isEmpty) {
-      validateResult.msgMap["json"] = "接收传入的json数据为空";
-      validateResult.flag = false;
+    ValidateResultModel validateResult =
+        JsonToModelUtils.baseValidate<NetApiModel>(
+          map,
+          key: "netApi",
+          fromJson: NetApiModel.fromJson,
+          validateFieldFn: NetApiModel.validateField,
+        );
+    if (!validateResult.flag) {
       return validateResult;
     }
 
-    JsonToModelUtils.validateFieldStr(
+    JsonToModelUtils.validateModelJson(
       map,
-      apiKeyDescModel: pathField,
       validateResult: validateResult,
-    );
-    JsonToModelUtils.validateFieldBool(
-      map,
-      apiKeyDescModel: useBaseUrlField,
-      validateResult: validateResult,
-    );
+      validateFieldList: [
+        ValidateFieldModel<String>(
+          fieldDesc: ApiKeyDescModel(
+            key: "path",
+            desc: "请求路径",
+            isRequired: true,
+          ),
+          fieldType: "string",
+        ),
+        ValidateFieldModel<bool>(
+          fieldDesc: ApiKeyDescModel(
+            key: "useBaseUrl",
+            desc: "是否使用基本的链接",
+            isRequired: false,
+          ),
+          fieldType: "bool",
+        ),
+        ValidateFieldModel<bool>(
+          fieldDesc: ApiKeyDescModel(
+            key: "useWebView",
+            desc: "是否使用webView",
+            isRequired: false,
+          ),
+          fieldType: "bool",
+        ),
+        ValidateFieldModel<bool>(
+          fieldDesc: ApiKeyDescModel(
+            key: "usePost",
+            desc: "是否使用post请求",
+            isRequired: false,
+          ),
+          fieldType: "bool",
+        ),
+        ValidateFieldModel<String>(
+          fieldDesc: ApiKeyDescModel(
+            key: "userAgent",
+            desc: "指定代理",
+            isRequired: false,
+          ),
+          fieldType: "string",
+        ),
+        ValidateFieldModel<RequestParamsModel>(
+          fieldDesc: ApiKeyDescModel(
+            key: "requestParams",
+            desc: "请求信息",
+            isRequired: true,
+          ),
+          fieldType: "class",
+          fromJson: RequestParamsModel.fromJson,
+          validateField: RequestParamsModel.validateField,
+        ),
+        ValidateFieldModel<ResponseParamsModel>(
+          fieldDesc: ApiKeyDescModel(
+            key: "responseParams",
+            desc: "响应信息",
+            isRequired: true,
+          ),
+          fieldType: "class",
+          fromJson: ResponseParamsModel.fromJson,
+          validateField: ResponseParamsModel.validateField,
+        ),
 
-    JsonToModelUtils.validateFieldBool(
-      map,
-      apiKeyDescModel: useWebViewField,
-      validateResult: validateResult,
-    );
+        ValidateFieldModel<FilterCriteriaModel>(
+          fieldDesc: ApiKeyDescModel(
+            key: "filterCriteriaList",
+            desc: "过滤请求列表",
+            isRequired: false,
+          ),
+          fieldType: "classList",
+          fromJson: FilterCriteriaModel.fromJson,
+          validateField: FilterCriteriaModel.validateField,
+        ),
 
-    JsonToModelUtils.validateFieldBool(
-      map,
-      apiKeyDescModel: usePostField,
-      validateResult: validateResult,
+        ValidateFieldModel<Map<String, dynamic>?>(
+          fieldDesc: ApiKeyDescModel(
+            key: "extendMap",
+            desc: "扩展信息",
+            isRequired: false,
+          ),
+          fieldType: "mapStrTody",
+        ),
+      ],
     );
-
-    JsonToModelUtils.validateFieldBool(
-      map,
-      apiKeyDescModel: userAgentField,
-      validateResult: validateResult,
-    );
-
-    JsonToModelUtils.validateField<RequestParamsModel>(
-      map,
-      apiKeyDescModel: requestParamsField,
-      validateResult: validateResult,
-      converter: (value) =>
-          requestParamsFieldTypeValidateAndConvert(value, validateResult),
-    );
-
-    JsonToModelUtils.validateField<ResponseParamsModel>(
-      map,
-      apiKeyDescModel: responseParamsField,
-      validateResult: validateResult,
-      converter: (value) =>
-          responseParamsFieldTypeValidateAndConvert(value, validateResult),
-    );
-
-    JsonToModelUtils.validateField<List<FilterCriteriaModel>?>(
-      map,
-      apiKeyDescModel: filterCriteriaListField,
-      validateResult: validateResult,
-      converter: (value) =>
-          filterCriteriaFieldTypeValidateAndConvert(value, validateResult),
-    );
-
-    JsonToModelUtils.validateField<Map<String, dynamic>?>(
-      map,
-      apiKeyDescModel: extendMapField,
-      validateResult: validateResult,
-      converter: (value) {
-        if (value is Map<String, dynamic>? || value is Map<String, dynamic>) {
-          return true;
-        }
-        // 尝试转换类型
-        try {
-          DataTypeConvertUtils.toMapStrDyMap(value);
-        } catch (e) {
-          validateResult.msgMap[extendMapField.key] =
-              "${extendMapField.desc}（${extendMapField.key}）数据转换时报错：$e";
-          return false;
-        }
-        return true;
-      },
-    );
-
-    if (validateResult.flag) {
-      validateResult.flag = validateResult.msgMap.isEmpty;
-    }
     return validateResult;
   }
-
-  /// 请求信息字段数据类型转换验证
-  static bool requestParamsFieldTypeValidateAndConvert(
-    value,
-    ValidateResultModel validateResult,
-  ) {
-    Map<String, dynamic> dataMap = {};
-    if (value is RequestParamsModel) {
-      dataMap = value.toJson();
-    } else if (value is Map<String, dynamic>) {
-      dataMap.addAll(value);
-    }
-    try {
-      dataMap.addAll(DataTypeConvertUtils.toMapStrDyMap(value));
-    } catch (e) {
-      validateResult.msgMap[requestParamsField.key] =
-          "${requestParamsField.desc}（${requestParamsField.key}）转换数据时报错：$e";
-      return false;
-    }
-    var result = RequestParamsModel.validateField(dataMap);
-    validateResult.childValidateResultMap[requestParamsField.key] = {
-      requestParamsField.key: result,
-    };
-    return result.flag;
-  }
-
-  /// 响应信息字段数据类型转换验证
-  static bool responseParamsFieldTypeValidateAndConvert(
-    value,
-    ValidateResultModel validateResult,
-  ) {
-    Map<String, dynamic> dataMap = {};
-    if (value is ResponseParamsModel) {
-      dataMap = value.toJson();
-    } else if (value is Map<String, dynamic>) {
-      dataMap.addAll(value);
-    }
-    try {
-      dataMap.addAll(DataTypeConvertUtils.toMapStrDyMap(value));
-    } catch (e) {
-      validateResult.msgMap[responseParamsField.key] =
-          "${responseParamsField.desc}（${responseParamsField.key}）转换数据时报错：$e";
-      return false;
-    }
-    var result = ResponseParamsModel.validateField(dataMap);
-    validateResult.childValidateResultMap[responseParamsField.key] = {
-      responseParamsField.key: result,
-    };
-    return result.flag;
-  }
-
-  /// 过滤请求列表信息字段数据类型转换验证
-  static bool filterCriteriaFieldTypeValidateAndConvert(
-    value,
-    ValidateResultModel validateResult,
-  ) {
-    Map<String, ValidateResultModel> filterCriteriaResultMap = {};
-    if (value is List<FilterCriteriaModel> ||
-        value is List<FilterCriteriaModel>?) {
-      return true;
-    }
-    bool flag = true;
-    List<Map<String, dynamic>> list = [];
-    if (value is List<FilterCriteriaModel>?) {
-      return true;
-    }
-    if (value is List<Map<String, dynamic>>) {
-      list.addAll(value);
-    } else if (value is Map<String, dynamic>) {
-      list.add(value);
-    } else {
-      // 尝试转换类型
-      try {
-        list.addAll(DataTypeConvertUtils.toListMapStrDyMap(value));
-      } catch (e) {
-        flag = false;
-        validateResult.msgMap[filterCriteriaListField.key] =
-            "${filterCriteriaListField.desc}（${filterCriteriaListField.key}）数据转换时报错：$e";
-        return false;
-      }
-    }
-    for (var item in list) {
-      String key = item["enName"] ?? item["name"] ?? "";
-      ValidateResultModel result = FilterCriteriaModel.validateField(item);
-      filterCriteriaResultMap[key] = result;
-      if (!result.flag) {
-        flag = false;
-      }
-    }
-    validateResult.childValidateResultMap[filterCriteriaListField.key] =
-        filterCriteriaResultMap;
-    return flag;
-  }
-
-  static final ApiKeyDescModel pathField = ApiKeyDescModel(
-    key: "path",
-    desc: "请求路径",
-    isRequired: true,
-  );
-  static final ApiKeyDescModel useBaseUrlField = ApiKeyDescModel(
-    key: "useBaseUrl",
-    desc: "是否使用基本的链接",
-    isRequired: false,
-  );
-  static final ApiKeyDescModel useWebViewField = ApiKeyDescModel(
-    key: "useWebView",
-    desc: "是否使用webView",
-    isRequired: false,
-  );
-  static final ApiKeyDescModel usePostField = ApiKeyDescModel(
-    key: "usePost",
-    desc: "是否使用post请求",
-    isRequired: false,
-  );
-  static final ApiKeyDescModel userAgentField = ApiKeyDescModel(
-    key: "userAgent",
-    desc: "指定代理",
-    isRequired: false,
-  );
-  static final ApiKeyDescModel requestParamsField = ApiKeyDescModel(
-    key: "requestParams",
-    desc: "请求信息",
-    isRequired: true,
-  );
-  static final ApiKeyDescModel responseParamsField = ApiKeyDescModel(
-    key: "responseParams",
-    desc: "响应信息",
-    isRequired: true,
-  );
-  static final ApiKeyDescModel filterCriteriaListField = ApiKeyDescModel(
-    key: "filterCriteriaList",
-    desc: "过滤请求列表",
-    isRequired: false,
-  );
-
-  static final ApiKeyDescModel extendMapField = ApiKeyDescModel(
-    key: "extendMap",
-    desc: "扩展信息",
-    isRequired: false,
-  );
 }

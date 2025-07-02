@@ -1,10 +1,9 @@
 import 'dart:convert';
 
-import 'package:flutter_dynamic_api/models/validate_result_model.dart';
-
 import '../utils/json_to_model_utils.dart';
-import '../utils/model_validate_factory_utils.dart';
 import 'api_key_desc_model.dart';
+import 'validate_field_model.dart';
+import 'validate_result_model.dart';
 
 List<FilterCriteriaParamsModel> filterCriteriaParamsModelListFromJsonStr(
   String str,
@@ -60,67 +59,50 @@ class FilterCriteriaParamsModel {
 
   // 验证方法
   static ValidateResultModel validateField(Map<String, dynamic> map) {
-    if (ModelValidateFactoryUtils.isRegisterFactory<
-      FilterCriteriaParamsModel
-    >()) {
-      ModelValidateFactoryUtils.register<FilterCriteriaParamsModel>(
-        validator: FilterCriteriaParamsModel.validateField,
-        factory: FilterCriteriaParamsModel.fromJson,
-      );
-    }
-    if (ModelValidateFactoryUtils.isRegisterValidator<
-      FilterCriteriaParamsModel
-    >()) {
-      ModelValidateFactoryUtils.registerValidator<FilterCriteriaParamsModel>(
-        FilterCriteriaParamsModel.validateField,
-      );
-    }
-    ValidateResultModel validateResult = ValidateResultModel(
-      key: "filterCriteriaParams",
-      msgMap: {},
-      childValidateResultMap: {},
-    );
-    if (map.isEmpty) {
-      validateResult.msgMap["json"] = "接收传入的json数据为空";
-      validateResult.flag = false;
+    ValidateResultModel validateResult =
+        JsonToModelUtils.baseValidate<FilterCriteriaParamsModel>(
+          map,
+          key: "filterCriteriaParams",
+          fromJson: FilterCriteriaParamsModel.fromJson,
+          validateFieldFn: FilterCriteriaParamsModel.validateField,
+        );
+    if (!validateResult.flag) {
       return validateResult;
     }
-    JsonToModelUtils.validateFieldStr(
+
+    JsonToModelUtils.validateModelJson(
       map,
-      apiKeyDescModel: valueField,
       validateResult: validateResult,
+      validateFieldList: [
+        ValidateFieldModel<String>(
+          fieldDesc: ApiKeyDescModel(
+            key: "value",
+            desc: "传入的值",
+            isRequired: true,
+          ),
+          fieldType: "string",
+        ),
+
+        ValidateFieldModel<String>(
+          fieldDesc: ApiKeyDescModel(
+            key: "label",
+            desc: "显示的值",
+            isRequired: true,
+          ),
+          fieldType: "string",
+        ),
+
+        ValidateFieldModel<String?>(
+          fieldDesc: ApiKeyDescModel(
+            key: "parentValue",
+            desc: "父级value",
+            isRequired: false,
+          ),
+          fieldType: "string",
+        ),
+      ],
     );
 
-    JsonToModelUtils.validateFieldStr(
-      map,
-      apiKeyDescModel: labelField,
-      validateResult: validateResult,
-    );
-
-    JsonToModelUtils.validateFieldStr(
-      map,
-      apiKeyDescModel: parentValueField,
-      validateResult: validateResult,
-    );
-    if (validateResult.flag) {
-      validateResult.flag = validateResult.msgMap.isEmpty;
-    }
     return validateResult;
   }
-
-  static final ApiKeyDescModel valueField = ApiKeyDescModel(
-    key: "value",
-    desc: "传入的值",
-    isRequired: true,
-  );
-  static final ApiKeyDescModel labelField = ApiKeyDescModel(
-    key: "label",
-    desc: "显示的值",
-    isRequired: true,
-  );
-  static final ApiKeyDescModel parentValueField = ApiKeyDescModel(
-    key: "parentValue",
-    desc: "父级value",
-    isRequired: false,
-  );
 }

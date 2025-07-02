@@ -1,8 +1,7 @@
-import 'package:flutter_dynamic_api/models/validate_result_model.dart';
-
 import '../utils/json_to_model_utils.dart';
-import '../utils/model_validate_factory_utils.dart';
 import 'api_key_desc_model.dart';
+import 'validate_field_model.dart';
+import 'validate_result_model.dart';
 
 class ApiBaseModel {
   /// 资源基本链接
@@ -40,64 +39,48 @@ class ApiBaseModel {
 
   // 验证方法
   static ValidateResultModel validateField(Map<String, dynamic> map) {
-    if (ModelValidateFactoryUtils.isRegisterFactory<ApiBaseModel>()) {
-      ModelValidateFactoryUtils.register<ApiBaseModel>(
-        validator: ApiBaseModel.validateField,
-        factory: ApiBaseModel.fromJson,
-      );
-    }
-    if (ModelValidateFactoryUtils.isRegisterValidator<ApiBaseModel>()) {
-      ModelValidateFactoryUtils.registerValidator<ApiBaseModel>(
-        ApiBaseModel.validateField,
-      );
-    }
-    ValidateResultModel validateResult = ValidateResultModel(
-      key: "apiBase",
-      msgMap: {},
-      childValidateResultMap: {},
-    );
-    if (map.isEmpty) {
-      validateResult.msgMap["json"] = "接收传入的json数据为空";
-      validateResult.flag = false;
+    ValidateResultModel validateResult =
+        JsonToModelUtils.baseValidate<ApiBaseModel>(
+          map,
+          key: "apiBaseInfo",
+          fromJson: ApiBaseModel.fromJson,
+          validateFieldFn: ApiBaseModel.validateField,
+        );
+    if (!validateResult.flag) {
       return validateResult;
     }
 
-    JsonToModelUtils.validateFieldStr(
+    JsonToModelUtils.validateModelJson(
       map,
-      apiKeyDescModel: baseUrlField,
       validateResult: validateResult,
+      validateFieldList: [
+        ValidateFieldModel<ApiBaseModel>(
+          fieldDesc: ApiKeyDescModel(
+            key: "baseUrl",
+            desc: "资源基本链接",
+            isRequired: true,
+          ),
+          fieldType: "string",
+        ),
+        ValidateFieldModel<String>(
+          fieldDesc: ApiKeyDescModel(
+            key: "name",
+            desc: "资源中文名称",
+            isRequired: true,
+          ),
+          fieldType: "string",
+        ),
+        ValidateFieldModel<String>(
+          fieldDesc: ApiKeyDescModel(
+            key: "enName",
+            desc: "资源英文名称",
+            isRequired: true,
+          ),
+          fieldType: "string",
+        ),
+      ],
     );
 
-    JsonToModelUtils.validateFieldStr(
-      map,
-      apiKeyDescModel: nameField,
-      validateResult: validateResult,
-    );
-
-    JsonToModelUtils.validateFieldStr(
-      map,
-      apiKeyDescModel: enNameField,
-      validateResult: validateResult,
-    );
-    if (validateResult.flag) {
-      validateResult.flag = validateResult.msgMap.isEmpty;
-    }
     return validateResult;
   }
-
-  static final ApiKeyDescModel baseUrlField = ApiKeyDescModel(
-    key: "baseUrl",
-    desc: "资源基本链接",
-    isRequired: true,
-  );
-  static final ApiKeyDescModel nameField = ApiKeyDescModel(
-    key: "name",
-    desc: "资源中文名称",
-    isRequired: true,
-  );
-  static final ApiKeyDescModel enNameField = ApiKeyDescModel(
-    key: "enName",
-    desc: "资源英文名称",
-    isRequired: true,
-  );
 }
