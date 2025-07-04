@@ -32,11 +32,12 @@ class DynamicFunctionModel {
     if (validateResult.msgMap.isNotEmpty) {
       throw Exception(validateResult.msgMap);
     }
+    var jsWebView = map["jsWebView"];
     return DynamicFunctionModel(
       dynamicFunctionEnum: dataSourceEnumMap[map["dynamicFunctionEnum"]]!,
       fn: map["fn"],
       fnName: map["fnName"],
-      jsWebView: map["jsWebView"],
+      jsWebView: jsWebView == null ? false : bool.tryParse(jsWebView) ?? false,
     );
   }
 
