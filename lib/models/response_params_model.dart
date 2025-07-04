@@ -2,6 +2,7 @@ import 'dart:convert';
 
 import '../utils/json_to_model_utils.dart';
 import 'api_key_desc_model.dart';
+import 'dynamic_function_model.dart';
 import 'validate_field_model.dart';
 import 'validate_result_model.dart';
 
@@ -23,16 +24,16 @@ class ResponseParamsModel {
   final Map<String, String> resultKeyMap;
 
   /// 用于将结果转换为需要的数据结构
-  /// 因flutter不支持动态，因此 使用js函数
-  final String? resultConvertJsFn;
+  /// 因flutter不支持动态，因此 使用js或dart_eval函数
+  final DynamicFunctionModel? resultConvertDyFn;
 
   ResponseParamsModel({
     required this.statusCodeKey,
     required this.successStatusCode,
     required this.resDataKey,
-    required this.resMsgKey,
+    this.resMsgKey,
     required this.resultKeyMap,
-    required this.resultConvertJsFn,
+    this.resultConvertDyFn,
   });
 
   factory ResponseParamsModel.fromJson(Map<String, dynamic> map) {
@@ -40,6 +41,7 @@ class ResponseParamsModel {
     if (validateResult.msgMap.isNotEmpty) {
       throw Exception(validateResult.msgMap);
     }
+    var resultConvertDyFn = map["resultConvertDyFn"];
     return ResponseParamsModel(
       statusCodeKey: map["statusCodeKey"],
       successStatusCode: map["successStatusCode"],
@@ -48,7 +50,9 @@ class ResponseParamsModel {
       resultKeyMap:
           JsonToModelUtils.getMapStrToTFromJson<String>(map, "resultKeyMap") ??
           {},
-      resultConvertJsFn: map["resultConvertJsFn"],
+      resultConvertDyFn: resultConvertDyFn == null
+          ? null
+          : DynamicFunctionModel.fromJson(resultConvertDyFn),
     );
   }
 
@@ -58,7 +62,7 @@ class ResponseParamsModel {
     "resDataKey": resDataKey,
     "resMsgKey": resMsgKey,
     "resultKeyMap": json.encode(resultKeyMap),
-    "resultConvertJsFn": resultConvertJsFn,
+    "resultConvertDyFn": resultConvertDyFn?.toJson(),
   };
 
   // 验证方法
@@ -120,13 +124,16 @@ class ResponseParamsModel {
           ),
           fieldType: "mapStrTody",
         ),
-        ValidateFieldModel<String>(
+
+        ValidateFieldModel<DynamicFunctionModel>(
           fieldDesc: ApiKeyDescModel(
-            key: "resultConvertJsFn",
-            desc: "用于将结果转换为需要的数据结构的js方法",
+            key: "resultConvertDyFn",
+            desc: "用于将结果转换为需要的数据结构的动态方法",
             isRequired: false,
           ),
-          fieldType: "string",
+          fieldType: "class",
+          fromJson: DynamicFunctionModel.fromJson,
+          validateField: DynamicFunctionModel.validateField,
         ),
       ],
     );

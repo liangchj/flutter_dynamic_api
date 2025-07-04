@@ -3,7 +3,7 @@ import 'dart:convert';
 import '../utils/data_type_convert_utils.dart';
 import '../utils/json_to_model_utils.dart';
 import 'api_key_desc_model.dart';
-import 'filter_criteria_model.dart';
+import 'dynamic_function_model.dart';
 import 'request_params_model.dart';
 import 'response_params_model.dart';
 import 'validate_field_model.dart';
@@ -44,11 +44,15 @@ class NetApiModel {
   /// 响应信息
   final ResponseParamsModel responseParams;
 
-  /// 过滤请求
-  final List<FilterCriteriaModel>? filterCriteriaList;
-
   /// 扩展信息
   final Map<String, dynamic>? extendMap;
+
+  // 使用webView需要执行的js方法
+  final String? webViewJsFn;
+
+  // 将结果写入到缓存中的动态方法
+  // 如果是读取html中的数据请使用js
+  final DynamicFunctionModel? recordCacheDyFn;
 
   NetApiModel({
     required this.path,
@@ -58,8 +62,9 @@ class NetApiModel {
     this.userAgent,
     required this.requestParams,
     required this.responseParams,
-    this.filterCriteriaList,
     this.extendMap,
+    this.webViewJsFn,
+    this.recordCacheDyFn,
   });
 
   factory NetApiModel.fromJson(Map<String, dynamic> map) {
@@ -96,17 +101,6 @@ class NetApiModel {
         errorList.add("读取配置responseParams转换类型时报错：$e");
       }
     }
-    var filterCriteriaListVar = map["filterCriteriaList"];
-    List<Map<String, dynamic>>? filterCriteriaList;
-    if (filterCriteriaListVar != null) {
-      try {
-        filterCriteriaList = DataTypeConvertUtils.toListMapStrDyMap(
-          filterCriteriaListVar,
-        );
-      } catch (e) {
-        errorList.add("读取配置filterCriteriaList转换类型时报错：$e");
-      }
-    }
     if (errorList.isNotEmpty) {
       throw Exception(errorList.join("\n"));
     }
@@ -120,13 +114,13 @@ class NetApiModel {
       userAgent: userAgent,
       requestParams: RequestParamsModel.fromJson(requestParamsMap),
       responseParams: ResponseParamsModel.fromJson(responseParamsMap),
-      filterCriteriaList: filterCriteriaList == null
-          ? null
-          : filterCriteriaModelListFromListJson(filterCriteriaList),
       extendMap: JsonToModelUtils.getMapStrToTFromJson<dynamic>(
         map,
         "extendMap",
       ),
+      recordCacheDyFn: map["recordCacheDyFn"] == null
+          ? null
+          : DynamicFunctionModel.fromJson(map["recordCacheDyFn"]),
     );
   }
 
@@ -138,10 +132,8 @@ class NetApiModel {
     "userAgent": userAgent,
     "requestParams": requestParams.toJson(),
     "responseParams": responseParams.toJson(),
-    "filterCriteriaList": filterCriteriaList == null
-        ? null
-        : filterCriteriaModelListToJson(filterCriteriaList!),
     "extendMap": extendMap,
+    "recordCacheDyFn": recordCacheDyFn?.toJson(),
   };
 
   // 验证方法
@@ -156,6 +148,10 @@ class NetApiModel {
     if (!validateResult.flag) {
       return validateResult;
     }
+    var useWebViewVar = map["useWebView"];
+    bool useWebView = useWebViewVar == null
+        ? false
+        : bool.tryParse(useWebViewVar) ?? false;
 
     JsonToModelUtils.validateModelJson(
       map,
@@ -222,17 +218,6 @@ class NetApiModel {
           validateField: ResponseParamsModel.validateField,
         ),
 
-        ValidateFieldModel<FilterCriteriaModel>(
-          fieldDesc: ApiKeyDescModel(
-            key: "filterCriteriaList",
-            desc: "过滤请求列表",
-            isRequired: false,
-          ),
-          fieldType: "classList",
-          fromJson: FilterCriteriaModel.fromJson,
-          validateField: FilterCriteriaModel.validateField,
-        ),
-
         ValidateFieldModel<Map<String, dynamic>?>(
           fieldDesc: ApiKeyDescModel(
             key: "extendMap",
@@ -240,6 +225,26 @@ class NetApiModel {
             isRequired: false,
           ),
           fieldType: "mapStrTody",
+        ),
+
+        ValidateFieldModel<String>(
+          fieldDesc: ApiKeyDescModel(
+            key: "webViewJsFn",
+            desc: "使用webView需要执行的js方法",
+            isRequired: useWebView,
+          ),
+          fieldType: "string",
+        ),
+
+        ValidateFieldModel<DynamicFunctionModel>(
+          fieldDesc: ApiKeyDescModel(
+            key: "recordCacheDyFn",
+            desc: "将结果写入到缓存中的动态方法，如果是读取html中的数据请使用js",
+            isRequired: false,
+          ),
+          fieldType: "class",
+          fromJson: DynamicFunctionModel.fromJson,
+          validateField: DynamicFunctionModel.validateField,
         ),
       ],
     );

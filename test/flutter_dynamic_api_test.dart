@@ -15,79 +15,89 @@ void main() {
           "headerParams": {},
           "staticParams": {"t": "vod", "ac": "list"},
           "dynamicParams": {
-            "page": "pg",
-            "pageSize": "limit",
-            "totalPage": "pagecount",
-            "totalCount": "total",
-            "typeIds": "type_id",
-            "parentTypeIds": "type_id_1",
-          },
-        },
-        "responseParams": {
-          "statusCodeKey": "code",
-          "successStatusCode": "200",
-          "resDataKey": "list",
-          "resMsg": "请求成功",
-          "resultKeyList": {"resourceId": "id"},
-        },
-        "filterCriteriaList": [
-          {
-            "enName": "type",
-            "name": "类型",
-            "requestKey": "t",
-            "filterCriteriaParamsList": [
-              {"value": "1", "label": "电影"},
-              {"value": "2", "label": "电视剧"},
-              {"value": "4", "label": "动漫"},
-            ],
-          },
-          {
-            "enName": "type1",
-            "name": "类型1",
-            "requestKey": "t",
-            "filterCriteriaApiSetting": {
-              "path": "/vod/list",
-              "requestParams": {
-                "headerParams": {},
-                "staticParams": {"t": "0", "ac": "list"},
-                "dynamicParams": {
-                  "typeIds": "type_id",
-                  "parentTypeIds": "type_id_1",
-                },
+            "page": {"requestKey": "pg"},
+            "pageSize": {"requestKey": "limit"},
+            "totalPage": {"requestKey": "pagecount"},
+            "totalCount": {"requestKey": "total"},
+            "typeIds": {
+              "requestKey": "t",
+              "dataSource": "filterCriteria",
+              "filterCriteria": {
+                "enName": "type",
+                "name": "类型",
+                "filterCriteriaParamsList": [
+                  {"value": "1", "label": "电影"},
+                  {"value": "2", "label": "电视剧"},
+                  {"value": "4", "label": "动漫"},
+                ],
               },
-              "responseParams": {
-                "statusCodeKey": "code",
-                "successStatusCode": "1",
-                "resDataKey": "class",
-                "resMsg": "请求成功",
-                "resultKeyMap": {
-                  "value": "type_id",
-                  "label": "type_name",
-                  "parentValue": "type_id",
+            },
+            "class": {
+              "requestKey": "class",
+              "dataSource": "filterCriteria",
+              "filterCriteria": {
+                "enName": "type1",
+                "name": "类型1",
+                "netApi": {
+                  "path": "/vod/list",
+                  "requestParams": {
+                    "headerParams": {},
+                    "staticParams": {"t": "0", "ac": "list"},
+                    "dynamicParams": {
+                      "parentTypeIds": {
+                        "requestKey": "t",
+                        "dataSource": "filterCriteria",
+                        "filterCriteria": {
+                          "enName": "type",
+                          "name": "类型",
+                          "filterCriteriaParamsList": [],
+                        },
+                      },
+                    },
+                  },
+                  "responseParams": {
+                    "statusCodeKey": "code",
+                    "successStatusCode": "1",
+                    "resDataKey": "class",
+                    "resMsg": "请求成功",
+                    "resultKeyMap": {
+                      "value": "type_id",
+                      "label": "type_name",
+                      "parentValue": "type_id",
+                    },
+                  },
                 },
               },
             },
-          },
-          {
-            "enName": "typeJsFn",
-            "name": "类型解析js方法",
-            "requestKey": "t",
-            "netApi": {
-              "path": "/vod/list",
-              "requestParams": {
-                "headerParams": {},
-                "staticParams": {"t": "0", "ac": "list"},
-                "dynamicParams": {
-                  "typeIds": "type_id",
-                  "parentTypeIds": "type_id_1",
-                },
-              },
-              "responseParams": {
-                "statusCodeKey": "code",
-                "successStatusCode": "1",
-                "resDataKey": "class",
-                "resMsg": "请求成功",
-                "resultConvertJsFn": """
+            "typeJsFn": {
+              "requestKey": "typeJsFn",
+              "dataSource": "filterCriteria",
+              "filterCriteria": {
+                "enName": "typeJsFn",
+                "name": "类型解析js方法",
+                "netApi": {
+                  "path": "/vod/list",
+                  "requestParams": {
+                    "headerParams": {},
+                    "staticParams": {"t": "0", "ac": "list"},
+                    "dynamicParams": {
+                      "parentTypeIds": {
+                        "requestKey": "t",
+                        "dataSource": "filterCriteria",
+                        "filterCriteria": {
+                          "enName": "type",
+                          "name": "类型",
+                          "filterCriteriaParamsList": [],
+                        },
+                      },
+                    },
+                  },
+                  "responseParams": {
+                    "statusCodeKey": "code",
+                    "successStatusCode": "1",
+                    "resDataKey": "class",
+                    "resMsg": "请求成功",
+                    "resultConvertJsFn": """
               function convertJson(typeJson) {
                 if (!typeJson) {
                     typeJson = {}
@@ -106,57 +116,29 @@ void main() {
                 return typeJson;
             }
           """,
+                  },
+                },
               },
             },
           },
-        ],
-      },
-      "detailApi": {
-        "path": "/vod/detail",
-        "requestParams": {
-          "headerParams": {},
-          "staticParams": {"t": "vod", "ac": "detail"},
-          "dynamicParams": {"ids": "ids"},
         },
         "responseParams": {
           "statusCodeKey": "code",
           "successStatusCode": "200",
           "resDataKey": "list",
           "resMsg": "请求成功",
-        },
-      },
-      "searchApi": {
-        "path": "/vod/search",
-        "requestParams": {
-          "headerParams": {},
-          "staticParams": {"t": "vod", "ac": "search"},
-          "dynamicParams": {
-            "page": "pg",
-            "pageSize": "limit",
-            "totalPage": "pagecount",
-            "totalCount": "total",
-            "keyword": "wd",
-          },
-        },
-        "responseParams": {
-          "statusCodeKey": "code",
-          "successStatusCode": "200",
-          "resDataKey": "list",
-          "resMsg": "请求成功",
+          "resultKeyList": {"resourceId": "id"},
         },
       },
     },
   };
+
   var validateResult = ApiConfigModel.validateField(apiJson);
   print(validateResult);
   if (validateResult.flag) {
     try {
       ApiConfigModel? apiConfigModel = ApiConfigModel.fromJson(apiJson);
-      if (apiConfigModel == null) {
-        print("转换结果为空");
-      } else {
-        print(apiConfigModel.toJson());
-      }
+      print(apiConfigModel.toJson());
     } catch (e) {
       print("转换出错：${JsonToModelUtils.getValidateResultMsg(validateResult)}");
     }

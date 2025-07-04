@@ -31,13 +31,6 @@ class FilterCriteriaModel {
   /// 中文名称
   final String name;
 
-  /// 请求的key
-  final String requestKey;
-
-  /// 用于将请求参数转换为需要的数据结构
-  /// 因flutter不支持动态，因此 使用js函数
-  final String? requestValueConvertJsFn;
-
   /// 是否可以多选
   final bool? multiples;
 
@@ -50,8 +43,6 @@ class FilterCriteriaModel {
   FilterCriteriaModel({
     required this.enName,
     required this.name,
-    required this.requestKey,
-    this.requestValueConvertJsFn,
     this.multiples,
     this.netApi,
     this.filterCriteriaParamsList,
@@ -90,9 +81,6 @@ class FilterCriteriaModel {
     return FilterCriteriaModel(
       enName: map["enName"],
       name: map["name"],
-      requestKey: map["requestKey"],
-      requestValueConvertJsFn: (map["requestValueConvertJsFn"] ?? "")
-          .toString(),
       multiples: multiples == null ? false : bool.tryParse(multiples) ?? false,
       netApi: netApiMap == null ? null : NetApiModel.fromJson(netApiMap),
       filterCriteriaParamsList: filterCriteriaParamsList == null
@@ -104,8 +92,6 @@ class FilterCriteriaModel {
   Map<String, dynamic> toJson() => {
     "enName": enName,
     "name": name,
-    "requestKey": requestKey,
-    "requestValueConvertJsFn": requestValueConvertJsFn,
     "multiples": multiples,
     "netApi": netApi?.toJson(),
     "filterCriteriaParamsList": filterCriteriaParamsList == null
@@ -143,22 +129,6 @@ class FilterCriteriaModel {
             key: "name",
             desc: "中文名称",
             isRequired: true,
-          ),
-          fieldType: "string",
-        ),
-        ValidateFieldModel<String>(
-          fieldDesc: ApiKeyDescModel(
-            key: "requestKey",
-            desc: "请求的key",
-            isRequired: true,
-          ),
-          fieldType: "string",
-        ),
-        ValidateFieldModel<String?>(
-          fieldDesc: ApiKeyDescModel(
-            key: "requestValueConvertJsFn",
-            desc: "用于将请求参数转换为需要的数据结构的js方法",
-            isRequired: false,
           ),
           fieldType: "string",
         ),

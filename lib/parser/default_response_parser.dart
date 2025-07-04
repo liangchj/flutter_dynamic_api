@@ -1,4 +1,7 @@
 import 'dart:convert';
+import 'package:dart_eval/dart_eval.dart';
+import 'package:dart_eval/stdlib/core.dart';
+import 'package:flutter_dynamic_api/models/dynamic_function_model.dart';
 import 'package:flutter_dynamic_api/utils/data_type_convert_utils.dart';
 import 'package:flutter_js/js_eval_result.dart';
 import '../enums/response_parse_status_code_common.dart';
@@ -13,21 +16,10 @@ class DefaultResponseParser<T> implements ResponseParser<T> {
   final T Function(Map<String, dynamic>) fromJson;
 
   DefaultResponseParser(this.fromJson);
-  @override
-  PageModel<T> listDataParseFromJson(
-    Map<String, dynamic> map,
-    NetApiModel netApiModel,
-  ) {
-    Map<String, dynamic> dataMap = convertTargetJsonMultiple(
-      map,
-      netApiModel.responseParams,
-    );
-    return parseResponseToPageModel(dataMap, netApiModel.responseParams);
-  }
 
+  // 解析列表数据
   @override
-  PageModel<T> listParseFromDynamic(dynamic data, NetApiModel netApiModel) {
-    Map<String, dynamic> dataMap = {};
+  PageModel<T> listDataParse(dynamic data, NetApiModel netApi) {
     if (data == null) {
       return PageModel<T>(
         page: 0,
@@ -40,13 +32,14 @@ class DefaultResponseParser<T> implements ResponseParser<T> {
         msg: ResponseParseStatusCodeEnum.dataNull.name,
       );
     }
-    if (data is Map<dynamic, dynamic>) {
-      for (var entry in data.entries) {
-        dataMap[entry.key.toString()] = entry.value;
-      }
-    } else if (data is Map<String, dynamic>) {
-      dataMap.addAll(data);
-    } else {
+    // 如果有定义动态方法就使用动态方法
+    if (netApi.responseParams.resultConvertDyFn != null) {
+      return listEvaluateDynamicFunction(data, netApi);
+    }
+    Map<String, dynamic> dataMap = {};
+    try {
+      dataMap = DataTypeConvertUtils.toMapStrDyMap(data);
+    } catch (e) {
       return PageModel<T>(
         page: 0,
         pageSize: 0,
@@ -58,52 +51,75 @@ class DefaultResponseParser<T> implements ResponseParser<T> {
             "${ResponseParseStatusCodeEnum.parseFail.name}，返回的数据不是有效的Map<dynamic, dynamic>或Map<String, dynamic>格式，请自定义js方法转换",
       );
     }
-    return listDataParseFromJson(dataMap, netApiModel);
+    Map<String, dynamic> handleDataMap = convertTargetJsonMultiple(
+      dataMap,
+      netApi.responseParams,
+    );
+    return parseResponseToPageModel(handleDataMap, netApi.responseParams);
   }
 
-  /// 解析列表内容
-  /// 未设置设置了key-value读取数据，使用自定义的Js方法解析
-  /// 结果是json
-  @override
-  PageModel<T> listDataParseFromJsonAndJsFn(
-    Map<String, dynamic> map,
-    NetApiModel netApiModel,
-  ) {
-    return listParseFromDynamicAndJsFn(map, netApiModel);
-  }
-
-  /// 解析列表
-  /// 未设置设置了key-value读取数据，使用自定义的Js方法解析
-  /// 结果未知
-  @override
-  PageModel<T> listParseFromDynamicAndJsFn(
-    dynamic data,
-    NetApiModel netApiModel,
-  ) {
-    if (data == null) {
+  // 列表执行动态方法
+  PageModel<T> listEvaluateDynamicFunction(dynamic data, NetApiModel netApi) {
+    if (netApi.responseParams.resultConvertDyFn == null) {
       return PageModel<T>(
         page: 0,
         pageSize: 0,
         totalPage: 0,
         totalCount: 0,
         isEnd: true,
-        modelList: null,
-        statusCode: ResponseParseStatusCodeEnum.dataNull.code,
-        msg: ResponseParseStatusCodeEnum.dataNull.name,
+        statusCode: ResponseParseStatusCodeEnum.dynamicFnNull.code,
+        msg: ResponseParseStatusCodeEnum.dynamicFnNull.name,
       );
     }
-    if (netApiModel.responseParams.resultConvertJsFn == null ||
-        netApiModel.responseParams.resultConvertJsFn!.isEmpty) {
+    if (netApi.responseParams.resultConvertDyFn!.dynamicFunctionEnum ==
+        DynamicFunctionEnum.js) {
+      // 动态方法时js脚本
+      return listEvaluateJsFunction(data, netApi);
+    }
+
+    return listEvaluateEvalFunction(data, netApi);
+  }
+
+  /// 列表执行eval方法
+  PageModel<T> listEvaluateEvalFunction(dynamic data, NetApiModel netApi) {
+    Map<String, dynamic> dataMap = {};
+    try {
+      dataMap = DataTypeConvertUtils.toMapStrDyMap(data);
+    } catch (e) {
       return PageModel<T>(
         page: 0,
         pageSize: 0,
         totalPage: 0,
         totalCount: 0,
         isEnd: true,
-        statusCode: ResponseParseStatusCodeEnum.jsFnNull.code,
-        msg: ResponseParseStatusCodeEnum.jsFnNull.name,
+        statusCode: ResponseParseStatusCodeEnum.evalNotAllowDataType.code,
+        msg:
+            "${ResponseParseStatusCodeEnum.evalNotAllowDataType.name}，当前数据类型转换失败：$e",
       );
     }
+    try {
+      Map<String, dynamic> result = eval(
+        netApi.responseParams.resultConvertDyFn!.fn,
+        function: netApi.responseParams.resultConvertDyFn!.fnName ?? "main",
+        args: [$Object(dataMap)],
+      );
+      return parseResponseToPageModel(result, netApi.responseParams);
+    } catch (e) {
+      return PageModel<T>(
+        page: 0,
+        pageSize: 0,
+        totalPage: 0,
+        totalCount: 0,
+        isEnd: true,
+        statusCode: ResponseParseStatusCodeEnum.dynamicFnExecuteFail.code,
+        msg:
+            "${ResponseParseStatusCodeEnum.dynamicFnExecuteFail.name}，请修改自定义的方法：$e",
+      );
+    }
+  }
+
+  /// 列表执行js方法
+  PageModel<T> listEvaluateJsFunction(dynamic data, NetApiModel netApi) {
     if (JsExecuteUtils.flutterJs == null) {
       JsExecuteUtils.applyGetFlutterJavascriptRuntime();
     }
@@ -115,15 +131,16 @@ class DefaultResponseParser<T> implements ResponseParser<T> {
         totalCount: 0,
         isEnd: true,
         statusCode:
-            ResponseParseStatusCodeEnum.jsRuntimeEnvironmentApplyFail.code,
-        msg: ResponseParseStatusCodeEnum.jsRuntimeEnvironmentApplyFail.name,
+            ResponseParseStatusCodeEnum.dynamicRuntimeEnvironmentApplyFail.code,
+        msg:
+            ResponseParseStatusCodeEnum.dynamicRuntimeEnvironmentApplyFail.name,
       );
     }
 
     /// 编译js方法
     try {
       JsExecuteUtils.flutterJs!.evaluate(
-        netApiModel.responseParams.resultConvertJsFn!,
+        netApi.responseParams.resultConvertDyFn!.fn,
       );
     } catch (e) {
       return PageModel<T>(
@@ -132,8 +149,8 @@ class DefaultResponseParser<T> implements ResponseParser<T> {
         totalPage: 0,
         totalCount: 0,
         isEnd: true,
-        statusCode: ResponseParseStatusCodeEnum.jsFnEvaluateFail.code,
-        msg: "${ResponseParseStatusCodeEnum.jsFnEvaluateFail.name}，$e",
+        statusCode: ResponseParseStatusCodeEnum.dynamicFnEvaluateFail.code,
+        msg: "${ResponseParseStatusCodeEnum.dynamicFnEvaluateFail.name}，$e",
       );
     }
 
@@ -153,8 +170,8 @@ class DefaultResponseParser<T> implements ResponseParser<T> {
         totalPage: 0,
         totalCount: 0,
         isEnd: true,
-        statusCode: ResponseParseStatusCodeEnum.jsFnExecuteFail.code,
-        msg: "${ResponseParseStatusCodeEnum.jsFnExecuteFail.name}原因，$e",
+        statusCode: ResponseParseStatusCodeEnum.dynamicFnExecuteFail.code,
+        msg: "${ResponseParseStatusCodeEnum.dynamicFnExecuteFail.name}原因，$e",
       );
     }
 
@@ -179,46 +196,32 @@ class DefaultResponseParser<T> implements ResponseParser<T> {
         totalPage: 0,
         totalCount: 0,
         isEnd: true,
-        statusCode: ResponseParseStatusCodeEnum.jsFnResultIsWrong.code,
+        statusCode: ResponseParseStatusCodeEnum.dynamicFnResultIsWrong.code,
         msg:
-            "${ResponseParseStatusCodeEnum.jsFnResultIsWrong.name}，需要返回的是Map<String, dynamic>，实际返回${rawResult?.runtimeType}，请修改自定义的js方法",
+            "${ResponseParseStatusCodeEnum.dynamicFnResultIsWrong.name}，需要返回的是Map<String, dynamic>，实际返回${rawResult?.runtimeType}，请修改自定义的js方法",
       );
     }
 
-    return parseResponseToPageModel(result ?? {}, netApiModel.responseParams);
+    return parseResponseToPageModel(result ?? {}, netApi.responseParams);
   }
 
+  /// 解析单个内容
   @override
-  DefaultResponseModel<T> detailParseFromJson(
-    Map<String, dynamic> map,
-    NetApiModel netApiModel,
-  ) {
-    Map<String, dynamic> dataMap = convertTargetJsonSingle(
-      map,
-      netApiModel.responseParams,
-    );
-    return parseResponseToResponseModel(dataMap, netApiModel.responseParams);
-  }
-
-  @override
-  DefaultResponseModel<T> detailParseFromDynamic(
-    dynamic data,
-    NetApiModel netApiModel,
-  ) {
-    Map<String, dynamic> dataMap = {};
+  DefaultResponseModel<T> detailParse(dynamic data, NetApiModel netApi) {
     if (data == null) {
-      return DefaultResponseModel<T>(
+      DefaultResponseModel<T>(
         statusCode: ResponseParseStatusCodeEnum.dataNull.code,
         msg: ResponseParseStatusCodeEnum.dataNull.name,
       );
     }
-    if (data is Map<dynamic, dynamic>) {
-      for (var entry in data.entries) {
-        dataMap[entry.key.toString()] = entry.value;
-      }
-    } else if (data is Map<String, dynamic>) {
-      dataMap.addAll(data);
-    } else {
+    // 如果有定义动态方法就需要先执行动态方法
+    if (netApi.responseParams.resultConvertDyFn != null) {
+      return detailEvaluateDynamicFunction(data, netApi);
+    }
+    Map<String, dynamic> dataMap = {};
+    try {
+      dataMap = DataTypeConvertUtils.toMapStrDyMap(data);
+    } catch (e) {
       return DefaultResponseModel<T>(
         statusCode: ResponseParseStatusCodeEnum.parseFail.code,
         msg:
@@ -226,61 +229,94 @@ class DefaultResponseParser<T> implements ResponseParser<T> {
       );
     }
 
-    return detailParseFromJson(dataMap, netApiModel);
+    Map<String, dynamic> handleDataMap = convertTargetJsonSingle(
+      dataMap,
+      netApi.responseParams,
+    );
+    return parseResponseToResponseModel(handleDataMap, netApi.responseParams);
   }
 
-  /// 解析单个内容
-  /// 设置了key-value读取数据，使用自定义的Js方法解析
-  /// 结果是json
-  @override
-  DefaultResponseModel<T> detailParseFromJsonAndJsFn(
-    Map<String, dynamic> map,
-    NetApiModel netApiModel,
+  /// 执行动态方法
+  DefaultResponseModel<T> detailEvaluateDynamicFunction(
+    Map<String, dynamic> data,
+    NetApiModel netApi,
   ) {
-    return detailParseFromDynamicAndJsFn(map, netApiModel);
+    if (netApi.responseParams.resultConvertDyFn == null) {
+      return DefaultResponseModel<T>(
+        statusCode: ResponseParseStatusCodeEnum.dynamicFnNull.code,
+        msg: ResponseParseStatusCodeEnum.dynamicFnNull.name,
+      );
+    }
+    if (netApi.responseParams.resultConvertDyFn!.dynamicFunctionEnum ==
+        DynamicFunctionEnum.js) {
+      // 动态方法时js脚本
+      return detailEvaluateJsFunction(data, netApi);
+    }
+
+    return DefaultResponseModel<T>(
+      statusCode: ResponseParseStatusCodeEnum.dynamicFnNull.code,
+      msg: ResponseParseStatusCodeEnum.dynamicFnNull.name,
+    );
   }
 
-  /// 解析单个内容
-  /// 设置了key-value读取数据，使用自定义的Js方法解析
-  /// 结果是json
-  @override
-  DefaultResponseModel<T> detailParseFromDynamicAndJsFn(
-    dynamic data,
-    NetApiModel netApiModel,
+  /// 执行Eval方法
+  DefaultResponseModel<T> detailEvaluateEvalFunction(
+    Map<String, dynamic> data,
+    NetApiModel netApi,
   ) {
-    if (data == null) {
+    Map<String, dynamic> dataMap = {};
+    try {
+      dataMap = DataTypeConvertUtils.toMapStrDyMap(data);
+    } catch (e) {
       return DefaultResponseModel<T>(
-        statusCode: ResponseParseStatusCodeEnum.dataNull.code,
-        msg: ResponseParseStatusCodeEnum.dataNull.name,
+        statusCode: ResponseParseStatusCodeEnum.evalNotAllowDataType.code,
+        msg:
+            "${ResponseParseStatusCodeEnum.evalNotAllowDataType.name}，当前数据类型转换失败：$e",
       );
     }
-    if (netApiModel.responseParams.resultConvertJsFn == null ||
-        netApiModel.responseParams.resultConvertJsFn!.isEmpty) {
+
+    try {
+      Map<String, dynamic> result = eval(
+        netApi.responseParams.resultConvertDyFn!.fn,
+        function: netApi.responseParams.resultConvertDyFn!.fnName ?? "main",
+        args: [$Object(dataMap)],
+      );
+      return parseResponseToResponseModel(result, netApi.responseParams);
+    } catch (e) {
       return DefaultResponseModel<T>(
-        statusCode: ResponseParseStatusCodeEnum.jsFnNull.code,
-        msg: ResponseParseStatusCodeEnum.jsFnNull.name,
+        statusCode: ResponseParseStatusCodeEnum.dynamicFnExecuteFail.code,
+        msg:
+            "${ResponseParseStatusCodeEnum.dynamicFnExecuteFail.name}，请修改自定义的方法：$e",
       );
     }
+  }
+
+  /// 执行js方法
+  DefaultResponseModel<T> detailEvaluateJsFunction(
+    Map<String, dynamic> data,
+    NetApiModel netApi,
+  ) {
     if (JsExecuteUtils.flutterJs == null) {
       JsExecuteUtils.applyGetFlutterJavascriptRuntime();
     }
     if (JsExecuteUtils.flutterJs == null) {
       return DefaultResponseModel<T>(
         statusCode:
-            ResponseParseStatusCodeEnum.jsRuntimeEnvironmentApplyFail.code,
-        msg: ResponseParseStatusCodeEnum.jsRuntimeEnvironmentApplyFail.name,
+            ResponseParseStatusCodeEnum.dynamicRuntimeEnvironmentApplyFail.code,
+        msg:
+            ResponseParseStatusCodeEnum.dynamicRuntimeEnvironmentApplyFail.name,
       );
     }
 
     /// 编译js方法
     try {
       JsExecuteUtils.flutterJs!.evaluate(
-        netApiModel.responseParams.resultConvertJsFn!,
+        netApi.responseParams.resultConvertDyFn!.fn,
       );
     } catch (e) {
       return DefaultResponseModel<T>(
-        statusCode: ResponseParseStatusCodeEnum.jsFnEvaluateFail.code,
-        msg: "${ResponseParseStatusCodeEnum.jsFnEvaluateFail.name}，$e",
+        statusCode: ResponseParseStatusCodeEnum.dynamicFnEvaluateFail.code,
+        msg: "${ResponseParseStatusCodeEnum.dynamicFnEvaluateFail.name}，$e",
       );
     }
 
@@ -295,8 +331,8 @@ class DefaultResponseParser<T> implements ResponseParser<T> {
       complexResult = JsExecuteUtils.flutterJs!.evaluate(jsFnStr);
     } catch (e) {
       return DefaultResponseModel<T>(
-        statusCode: ResponseParseStatusCodeEnum.jsFnExecuteFail.code,
-        msg: "${ResponseParseStatusCodeEnum.jsFnExecuteFail.name}原因，$e",
+        statusCode: ResponseParseStatusCodeEnum.dynamicFnExecuteFail.code,
+        msg: "${ResponseParseStatusCodeEnum.dynamicFnExecuteFail.name}原因，$e",
       );
     }
 
@@ -316,15 +352,12 @@ class DefaultResponseParser<T> implements ResponseParser<T> {
       }
     } catch (e) {
       return DefaultResponseModel<T>(
-        statusCode: ResponseParseStatusCodeEnum.jsFnResultIsWrong.code,
+        statusCode: ResponseParseStatusCodeEnum.dynamicFnResultIsWrong.code,
         msg:
-            "${ResponseParseStatusCodeEnum.jsFnResultIsWrong.name}，需要返回的是Map<String, dynamic>，实际返回${rawResult?.runtimeType}，请修改自定义的js方法",
+            "${ResponseParseStatusCodeEnum.dynamicFnResultIsWrong.name}，需要返回的是Map<String, dynamic>，实际返回${rawResult?.runtimeType}，请修改自定义的js方法",
       );
     }
-    return parseResponseToResponseModel(
-      result ?? {},
-      netApiModel.responseParams,
-    );
+    return parseResponseToResponseModel(result ?? {}, netApi.responseParams);
   }
 
   /// 转换生成单个目标json

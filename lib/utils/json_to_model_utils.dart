@@ -341,8 +341,6 @@ class JsonToModelUtils {
     }
     final value = map[apiKeyDescModel.key];
     // 验证必填
-    // if (apiKeyDescModel.isRequired &&
-    //     (value == null || value.toString().isEmpty)) {
     if (apiKeyDescModel.isRequired && value == null) {
       validateResult.msgMap[apiKeyDescModel.key] =
           "${apiKeyDescModel.desc}（${apiKeyDescModel.key}）为必填项，json中获取到为空";

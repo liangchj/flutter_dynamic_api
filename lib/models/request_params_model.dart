@@ -1,7 +1,9 @@
 import 'dart:convert';
 
+import '../utils/data_type_convert_utils.dart';
 import '../utils/json_to_model_utils.dart';
 import 'api_key_desc_model.dart';
+import 'dynamic_params_model.dart';
 import 'validate_field_model.dart';
 import 'validate_result_model.dart';
 
@@ -14,7 +16,7 @@ class RequestParamsModel {
   final Map<String, dynamic>? staticParams;
 
   /// 动态参数
-  final Map<String, dynamic>? dynamicParams;
+  final Map<String, DynamicParamsModel>? dynamicParams;
 
   RequestParamsModel({
     required this.headerParams,
@@ -27,6 +29,26 @@ class RequestParamsModel {
     if (validateResult.msgMap.isNotEmpty) {
       throw Exception(validateResult.msgMap);
     }
+    List<String> errorList = [];
+    var dynamicParamsVar = map["dynamicParams"];
+    Map<String, dynamic>? dynamicParamsMap;
+    Map<String, DynamicParamsModel>? dynamicParams;
+    if (dynamicParamsVar != null) {
+      try {
+        dynamicParamsMap = DataTypeConvertUtils.toMapStrDyMap(dynamicParamsVar);
+        dynamicParams = {};
+        for (var entry in dynamicParamsMap.entries) {
+          dynamicParams[entry.key] = DynamicParamsModel.fromJson(
+            DataTypeConvertUtils.toMapStrDyMap(entry.value),
+          );
+        }
+      } catch (e) {
+        errorList.add("读取配置dynamicParams转换类型时报错：$e");
+      }
+    }
+    if (errorList.isNotEmpty) {
+      throw Exception(errorList.join("\n"));
+    }
     return RequestParamsModel(
       headerParams: JsonToModelUtils.getMapStrToTFromJson<dynamic>(
         map,
@@ -36,20 +58,21 @@ class RequestParamsModel {
         map,
         "staticParams",
       ),
-      dynamicParams: JsonToModelUtils.getMapStrToTFromJson<dynamic>(
-        map,
-        "dynamicParams",
-      ),
+      dynamicParams: dynamicParams,
     );
   }
 
   Map<String, dynamic> toJson() {
+    String dynamicParamsToStr = "";
+    if (dynamicParams != null) {
+      for (var entry in dynamicParams!.entries) {
+        dynamicParamsToStr += '"${entry.key}": ${entry.value.toJson()}';
+      }
+    }
     return {
       "headerParams": headerParams == null ? null : json.encode(headerParams),
       "staticParams": staticParams == null ? null : json.encode(staticParams),
-      "dynamicParams": dynamicParams == null
-          ? null
-          : json.encode(dynamicParams),
+      "dynamicParams": dynamicParamsToStr,
     };
   }
 
@@ -87,13 +110,15 @@ class RequestParamsModel {
           ),
           fieldType: "mapStrTody",
         ),
-        ValidateFieldModel<Map<String, dynamic>?>(
+        ValidateFieldModel<DynamicParamsModel>(
           fieldDesc: ApiKeyDescModel(
             key: "dynamicParams",
             desc: "请求动态参数",
             isRequired: false,
           ),
-          fieldType: "mapStrTody",
+          fieldType: "mapStrToClass",
+          fromJson: DynamicParamsModel.fromJson,
+          validateField: DynamicParamsModel.validateField,
         ),
       ],
     );
