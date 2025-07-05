@@ -370,6 +370,7 @@ class DefaultResponseParser<T> implements ResponseParser<T> {
     String statusCode = (map[statusCodeKey] ?? "").toString();
     String resDataKey = responseParamsModel.resDataKey;
     String resMsg = map[responseParamsModel.resMsgKey ?? "msg"] ?? "";
+
     Map<String, dynamic> resultMap = {"statusCode": statusCode, "msg": resMsg};
     var data = map[resDataKey];
     if (data != null) {
@@ -383,8 +384,10 @@ class DefaultResponseParser<T> implements ResponseParser<T> {
         for (var entry in responseParamsModel.resultKeyMap.entries) {
           dataMap[entry.key] = dataMap[entry.value];
         }
-        resultMap["data"] = dataMap;
       }
+      resultMap["data"] = dataMap;
+    } else {
+      resultMap["data"] = {};
     }
     return resultMap;
   }
@@ -401,7 +404,18 @@ class DefaultResponseParser<T> implements ResponseParser<T> {
     String statusCode = (map[statusCodeKey] ?? "").toString();
     String resDataKey = responseParamsModel.resDataKey;
     String resMsg = map[responseParamsModel.resMsgKey ?? "msg"] ?? "";
-    List<dynamic> data = map[resDataKey] ?? [];
+    var resData = map[resDataKey];
+    List<dynamic> data = [];
+    if (resData != null) {
+      try {
+        data = DataTypeConvertUtils.toListMapStrDyMap(resData);
+      } catch (e) {
+        throw Exception(
+          "获取到的数据不是有效的List<Map<String, dynamic>>格式，当前格式：${resData.runtimeType}",
+        );
+      }
+    }
+
     Map<String, dynamic> resultMap = {
       "statusCode": statusCode,
       "msg": resMsg,
