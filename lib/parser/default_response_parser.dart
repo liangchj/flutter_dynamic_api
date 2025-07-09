@@ -253,10 +253,7 @@ class DefaultResponseParser<T> implements ResponseParser<T> {
       return detailEvaluateJsFunction(data, netApi);
     }
 
-    return DefaultResponseModel<T>(
-      statusCode: ResponseParseStatusCodeEnum.dynamicFnNull.code,
-      msg: ResponseParseStatusCodeEnum.dynamicFnNull.name,
-    );
+    return detailEvaluateEvalFunction(data, netApi);
   }
 
   /// 执行Eval方法
@@ -475,7 +472,7 @@ class DefaultResponseParser<T> implements ResponseParser<T> {
           );
         }
         return DefaultResponseModel<T>(
-          model: fromJson(data),
+          model: fromJson(dataMap),
           statusCode: ResponseParseStatusCodeEnum.success.code,
           msg: ResponseParseStatusCodeEnum.success.name,
         );
