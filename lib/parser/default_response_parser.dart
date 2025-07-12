@@ -158,11 +158,20 @@ class DefaultResponseParser<T> implements ResponseParser<T> {
     String jsonString = json.encode(data);
 
     /// 拼接js执行方法
-    String jsFnStr = 'convertJson(JSON.parse(\'$jsonString\'))';
+    /// 这种方式会有转义问题
+    // String jsFnStr = 'convertJson(JSON.parse(\'$jsonString\'))';
     JsEvalResult? complexResult;
     try {
       /// 执行js方法
-      complexResult = JsExecuteUtils.flutterJs!.evaluate(jsFnStr);
+      // complexResult = JsExecuteUtils.flutterJs!.evaluate(jsFnStr);
+      // 分两步执行：先设置变量，再调用函数
+      JsExecuteUtils.flutterJs!.evaluate('var jsonData = $jsonString;');
+
+      /// 执行js方法
+      // complexResult = JsExecuteUtils.flutterJs!.evaluate(jsFnStr);
+      complexResult = JsExecuteUtils.flutterJs!.evaluate(
+        'convertJson(jsonData)',
+      );
     } catch (e) {
       return PageModel<T>(
         page: 0,
@@ -180,6 +189,19 @@ class DefaultResponseParser<T> implements ResponseParser<T> {
     try {
       rawResult = complexResult.rawResult;
       if (rawResult != null) {
+        if (rawResult is Map &&
+            (rawResult["message"] != null || rawResult["stack"] != null)) {
+          return PageModel<T>(
+            page: 0,
+            pageSize: 0,
+            totalPage: 0,
+            totalCount: 0,
+            isEnd: true,
+            statusCode: ResponseParseStatusCodeEnum.dynamicFnExecuteFail.code,
+            msg:
+                "${ResponseParseStatusCodeEnum.dynamicFnExecuteFail.name}，执行动态js报错${rawResult['message'] == null ? '' : '，message:${rawResult['message']}'}${rawResult['stack'] == null ? '' : '，stack:${rawResult['stack']}'}",
+          );
+        }
         result = {};
         if (rawResult is Map<String, dynamic>) {
           result = rawResult;
@@ -321,11 +343,18 @@ class DefaultResponseParser<T> implements ResponseParser<T> {
     String jsonString = json.encode(data);
 
     /// 拼接js执行方法
-    String jsFnStr = 'convertJson(JSON.parse(\'$jsonString\'))';
+    /// 这种方式会有转义问题
+    // String jsFnStr = 'convertJson(JSON.parse(\'$jsonString\'))';
     JsEvalResult? complexResult;
     try {
+      // 分两步执行：先设置变量，再调用函数
+      JsExecuteUtils.flutterJs!.evaluate('var jsonData = $jsonString;');
+
       /// 执行js方法
-      complexResult = JsExecuteUtils.flutterJs!.evaluate(jsFnStr);
+      // complexResult = JsExecuteUtils.flutterJs!.evaluate(jsFnStr);
+      complexResult = JsExecuteUtils.flutterJs!.evaluate(
+        'convertJson(jsonData)',
+      );
     } catch (e) {
       return DefaultResponseModel<T>(
         statusCode: ResponseParseStatusCodeEnum.dynamicFnExecuteFail.code,
@@ -338,6 +367,15 @@ class DefaultResponseParser<T> implements ResponseParser<T> {
     try {
       rawResult = complexResult.rawResult;
       if (rawResult != null) {
+        if (rawResult is Map &&
+            (rawResult["message"] != null || rawResult["stack"] != null)) {
+          return DefaultResponseModel<T>(
+            statusCode: ResponseParseStatusCodeEnum.dynamicFnExecuteFail.code,
+            msg:
+                "${ResponseParseStatusCodeEnum.dynamicFnExecuteFail.name}，执行动态js报错${rawResult['message'] == null ? '' : '，message:${rawResult['message']}'}${rawResult['stack'] == null ? '' : '，stack:${rawResult['stack']}'}",
+          );
+        }
+
         result = {};
         if (rawResult is Map<String, dynamic>) {
           result = rawResult;
