@@ -1,6 +1,4 @@
 import 'dart:convert';
-import 'package:dart_eval/dart_eval.dart';
-import 'package:dart_eval/stdlib/core.dart';
 import 'package:flutter_dynamic_api/models/dynamic_function_model.dart';
 import 'package:flutter_dynamic_api/utils/data_type_convert_utils.dart';
 import 'package:flutter_js/js_eval_result.dart';
@@ -71,51 +69,8 @@ class DefaultResponseParser<T> implements ResponseParser<T> {
         msg: ResponseParseStatusCodeEnum.dynamicFnNull.name,
       );
     }
-    if (netApi.responseParams.resultConvertDyFn!.dynamicFunctionEnum ==
-        DynamicFunctionEnum.js) {
-      // 动态方法时js脚本
-      return listEvaluateJsFunction(data, netApi);
-    }
-
-    return listEvaluateEvalFunction(data, netApi);
-  }
-
-  /// 列表执行eval方法
-  PageModel<T> listEvaluateEvalFunction(dynamic data, NetApiModel netApi) {
-    Map<String, dynamic> dataMap = {};
-    try {
-      dataMap = DataTypeConvertUtils.toMapStrDyMap(data);
-    } catch (e) {
-      return PageModel<T>(
-        page: 0,
-        pageSize: 0,
-        totalPage: 0,
-        totalCount: 0,
-        isEnd: true,
-        statusCode: ResponseParseStatusCodeEnum.evalNotAllowDataType.code,
-        msg:
-            "${ResponseParseStatusCodeEnum.evalNotAllowDataType.name}，当前数据类型转换失败：$e",
-      );
-    }
-    try {
-      Map<String, dynamic> result = eval(
-        netApi.responseParams.resultConvertDyFn!.fn,
-        function: netApi.responseParams.resultConvertDyFn!.fnName ?? "main",
-        args: [$Object(dataMap)],
-      );
-      return parseResponseToPageModel(result, netApi.responseParams);
-    } catch (e) {
-      return PageModel<T>(
-        page: 0,
-        pageSize: 0,
-        totalPage: 0,
-        totalCount: 0,
-        isEnd: true,
-        statusCode: ResponseParseStatusCodeEnum.dynamicFnExecuteFail.code,
-        msg:
-            "${ResponseParseStatusCodeEnum.dynamicFnExecuteFail.name}，请修改自定义的方法：$e",
-      );
-    }
+    // 动态方法：js脚本
+    return listEvaluateJsFunction(data, netApi);
   }
 
   /// 列表执行js方法
@@ -269,45 +224,8 @@ class DefaultResponseParser<T> implements ResponseParser<T> {
         msg: ResponseParseStatusCodeEnum.dynamicFnNull.name,
       );
     }
-    if (netApi.responseParams.resultConvertDyFn!.dynamicFunctionEnum ==
-        DynamicFunctionEnum.js) {
-      // 动态方法时js脚本
-      return detailEvaluateJsFunction(data, netApi);
-    }
-
-    return detailEvaluateEvalFunction(data, netApi);
-  }
-
-  /// 执行Eval方法
-  DefaultResponseModel<T> detailEvaluateEvalFunction(
-    Map<String, dynamic> data,
-    NetApiModel netApi,
-  ) {
-    Map<String, dynamic> dataMap = {};
-    try {
-      dataMap = DataTypeConvertUtils.toMapStrDyMap(data);
-    } catch (e) {
-      return DefaultResponseModel<T>(
-        statusCode: ResponseParseStatusCodeEnum.evalNotAllowDataType.code,
-        msg:
-            "${ResponseParseStatusCodeEnum.evalNotAllowDataType.name}，当前数据类型转换失败：$e",
-      );
-    }
-
-    try {
-      Map<String, dynamic> result = eval(
-        netApi.responseParams.resultConvertDyFn!.fn,
-        function: netApi.responseParams.resultConvertDyFn!.fnName ?? "main",
-        args: [$Object(dataMap)],
-      );
-      return parseResponseToResponseModel(result, netApi.responseParams);
-    } catch (e) {
-      return DefaultResponseModel<T>(
-        statusCode: ResponseParseStatusCodeEnum.dynamicFnExecuteFail.code,
-        msg:
-            "${ResponseParseStatusCodeEnum.dynamicFnExecuteFail.name}，请修改自定义的方法：$e",
-      );
-    }
+    // 动态方法是js脚本
+    return detailEvaluateJsFunction(data, netApi);
   }
 
   /// 执行js方法
