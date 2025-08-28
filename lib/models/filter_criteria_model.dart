@@ -93,15 +93,22 @@ class FilterCriteriaModel {
     );
   }
 
-  Map<String, dynamic> toJson() => {
-    "enName": enName,
-    "name": name,
-    "multiples": multiples,
-    "netApi": netApi?.toJson(),
-    "filterCriteriaParamsList": filterCriteriaParamsList == null
-        ? null
-        : filterCriteriaParamsModelListToJson(filterCriteriaParamsList!),
-  };
+  Map<String, dynamic> toJson() {
+    List<Map<String, dynamic>>? filterCriteriaParamsListMap;
+    if (filterCriteriaParamsList != null) {
+      for (var item in filterCriteriaParamsList!) {
+        filterCriteriaParamsListMap ??= [];
+        filterCriteriaParamsListMap.add(item.toJson());
+      }
+    }
+    return {
+      "enName": enName,
+      "name": name,
+      "multiples": multiples,
+      "netApi": netApi?.toJson(),
+      "filterCriteriaParamsList": filterCriteriaParamsListMap,
+    };
+  }
 
   // 验证方法
   static ValidateResultModel validateField(Map<String, dynamic> map) {
