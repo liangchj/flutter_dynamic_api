@@ -50,14 +50,6 @@ class DynamicFunctionModel {
       validateFieldList: [
         ValidateFieldModel<String>(
           fieldDesc: ApiKeyDescModel(
-            key: "dynamicFunctionEnum",
-            desc: "动态方法类型",
-            isRequired: true,
-          ),
-          fieldType: "string",
-        ),
-        ValidateFieldModel<String>(
-          fieldDesc: ApiKeyDescModel(
             key: "fn",
             desc: "动态方法字符串",
             isRequired: true,

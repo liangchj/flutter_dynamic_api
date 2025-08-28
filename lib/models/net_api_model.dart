@@ -141,6 +141,7 @@ class NetApiModel {
     "requestParams": requestParams.toJson(),
     "responseParams": responseParams.toJson(),
     "extendMap": extendMap,
+    "webViewJsFn": webViewJsFn,
     "recordCacheDyFn": recordCacheDyFn?.toJson(),
   };
 
@@ -234,7 +235,7 @@ class NetApiModel {
             desc: "扩展信息",
             isRequired: false,
           ),
-          fieldType: "mapStrTody",
+          fieldType: "mapStrToDy",
         ),
 
         ValidateFieldModel<String>(
