@@ -1,5 +1,6 @@
 import 'dart:convert';
 
+import '../utils/data_type_convert_utils.dart';
 import '../utils/json_to_model_utils.dart';
 import 'api_key_desc_model.dart';
 import 'dynamic_function_model.dart';
@@ -41,7 +42,11 @@ class ResponseParamsModel {
     if (validateResult.msgMap.isNotEmpty) {
       throw Exception(validateResult.msgMap);
     }
+    Map<String, dynamic>? resultConvertDyFnMap;
     var resultConvertDyFn = map["resultConvertDyFn"];
+    if (resultConvertDyFn != null) {
+      resultConvertDyFnMap = DataTypeConvertUtils.toMapStrDyMap(resultConvertDyFn);
+    }
     return ResponseParamsModel(
       statusCodeKey: map["statusCodeKey"],
       successStatusCode: map["successStatusCode"],
@@ -50,9 +55,9 @@ class ResponseParamsModel {
       resultKeyMap:
           JsonToModelUtils.getMapStrToTFromJson<String>(map, "resultKeyMap") ??
           {},
-      resultConvertDyFn: resultConvertDyFn == null
+      resultConvertDyFn: resultConvertDyFnMap == null
           ? null
-          : DynamicFunctionModel.fromJson(resultConvertDyFn),
+          : DynamicFunctionModel.fromJson(resultConvertDyFnMap),
     );
   }
 
