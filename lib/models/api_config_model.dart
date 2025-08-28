@@ -56,11 +56,14 @@ class ApiConfigModel {
   }
 
   Map<String, dynamic> toJson() {
-    String netApiMapToStr = "";
+    Map<String, Map<String, dynamic>> netApiMapToJson = {};
     for (var entry in netApiMap.entries) {
-      netApiMapToStr += '"${entry.key}": ${entry.value.toJson()}';
+      netApiMapToJson[entry.key] = entry.value.toJson();
     }
-    return {"apiBaseModel": apiBaseModel.toJson(), "netApiMap": netApiMapToStr};
+    return {
+      "apiBaseModel": apiBaseModel.toJson(),
+      "netApiMap": netApiMapToJson,
+    };
   }
 
   // 验证方法
