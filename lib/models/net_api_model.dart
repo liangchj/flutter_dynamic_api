@@ -106,11 +106,19 @@ class NetApiModel {
     }
     return NetApiModel(
       path: map["path"],
-      useBaseUrl: useBaseUrl == null ? true : bool.tryParse(useBaseUrl) ?? true,
+      useBaseUrl: useBaseUrl == null
+          ? true
+          : useBaseUrl is bool
+          ? useBaseUrl
+          : bool.tryParse(useBaseUrl.toString()) ?? true,
       useWebView: useWebView == null
           ? false
-          : bool.tryParse(useWebView) ?? false,
-      usePost: usePost == null ? false : bool.tryParse(usePost) ?? false,
+          : useWebView is bool
+          ? useWebView
+          : bool.tryParse(useWebView.toString()) ?? false,
+      usePost: usePost == null
+          ? false
+          : bool.tryParse(usePost.toString()) ?? false,
       userAgent: userAgent,
       requestParams: RequestParamsModel.fromJson(requestParamsMap),
       responseParams: ResponseParamsModel.fromJson(responseParamsMap),
@@ -151,7 +159,9 @@ class NetApiModel {
     var useWebViewVar = map["useWebView"];
     bool useWebView = useWebViewVar == null
         ? false
-        : bool.tryParse(useWebViewVar) ?? false;
+        : useWebViewVar is bool
+        ? useWebViewVar
+        : bool.tryParse(useWebViewVar.toString()) ?? false;
 
     JsonToModelUtils.validateModelJson(
       map,

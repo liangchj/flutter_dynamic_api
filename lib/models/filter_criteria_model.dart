@@ -81,7 +81,11 @@ class FilterCriteriaModel {
     return FilterCriteriaModel(
       enName: map["enName"],
       name: map["name"],
-      multiples: multiples == null ? false : bool.tryParse(multiples) ?? false,
+      multiples: multiples == null
+          ? false
+          : multiples is bool
+          ? multiples
+          : bool.tryParse(multiples.toString()) ?? false,
       netApi: netApiMap == null ? null : NetApiModel.fromJson(netApiMap),
       filterCriteriaParamsList: filterCriteriaParamsList == null
           ? null

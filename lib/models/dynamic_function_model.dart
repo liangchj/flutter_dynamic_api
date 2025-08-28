@@ -21,7 +21,11 @@ class DynamicFunctionModel {
     var jsWebView = map["jsWebView"];
     return DynamicFunctionModel(
       fn: map["fn"],
-      jsWebView: jsWebView == null ? false : bool.tryParse(jsWebView) ?? false,
+      jsWebView: jsWebView == null
+          ? false
+          : jsWebView is bool
+          ? jsWebView
+          : bool.tryParse(jsWebView.toString()) ?? false,
     );
   }
 

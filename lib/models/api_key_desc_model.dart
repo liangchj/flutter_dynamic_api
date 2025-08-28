@@ -13,7 +13,9 @@ class ApiKeyDescModel {
     var isRequiredVar = map["isRequired"];
     bool? isRequired;
     if (isRequiredVar != null) {
-      isRequired = bool.tryParse(isRequiredVar);
+      isRequired = isRequiredVar is bool
+          ? isRequiredVar
+          : bool.tryParse(isRequiredVar.toString());
     }
     return ApiKeyDescModel(
       key: map["key"],

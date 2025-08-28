@@ -139,7 +139,7 @@ class JsonToModelUtils {
       converter: (value) {
         if (value is bool) return true;
         if (value != null) {
-          bool? flag = bool.tryParse(value);
+          bool? flag = value is bool ? value : bool.tryParse(value.toString());
           if (flag != null) {
             return true;
           }
@@ -339,13 +339,17 @@ class JsonToModelUtils {
       }
       return;
     }
+
     final value = map[apiKeyDescModel.key];
-    // 验证必填
-    if (apiKeyDescModel.isRequired && value == null) {
-      validateResult.msgMap[apiKeyDescModel.key] =
-          "${apiKeyDescModel.desc}（${apiKeyDescModel.key}）为必填项，json中获取到为空";
+    if (value == null) {
+      // 验证必填
+      if (apiKeyDescModel.isRequired) {
+        validateResult.msgMap[apiKeyDescModel.key] =
+            "${apiKeyDescModel.desc}（${apiKeyDescModel.key}）为必填项，json中获取到为空";
+      }
       return;
     }
+
     if (converter == null) {
       return;
     }

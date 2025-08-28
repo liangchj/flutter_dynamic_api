@@ -63,16 +63,16 @@ class RequestParamsModel {
   }
 
   Map<String, dynamic> toJson() {
-    String dynamicParamsToStr = "";
+    Map<String, Map<String, dynamic>> dynamicParamsToJson = {};
     if (dynamicParams != null) {
       for (var entry in dynamicParams!.entries) {
-        dynamicParamsToStr += '"${entry.key}": ${entry.value.toJson()}';
+        dynamicParamsToJson[entry.key] = entry.value.toJson();
       }
     }
     return {
       "headerParams": headerParams == null ? null : json.encode(headerParams),
       "staticParams": staticParams == null ? null : json.encode(staticParams),
-      "dynamicParams": dynamicParamsToStr,
+      "dynamicParams": dynamicParamsToJson,
     };
   }
 

@@ -63,7 +63,9 @@ class DynamicParamsModel {
       requestKey: map["requestKey"],
       emptyNeedSend: emptyNeedSend == null
           ? true
-          : bool.tryParse(emptyNeedSend) ?? true,
+          : emptyNeedSend is bool
+          ? emptyNeedSend
+          : bool.tryParse(emptyNeedSend.toString()) ?? true,
       dataSource:
           dataSourceEnumMap[map["dataSource"]] ??
           DynamicParamsDataSourceEnum.dynamic,
