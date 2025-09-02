@@ -1,5 +1,3 @@
-import 'dart:convert';
-
 import '../utils/data_type_convert_utils.dart';
 import '../utils/json_to_model_utils.dart';
 import 'api_key_desc_model.dart';
@@ -45,7 +43,9 @@ class ResponseParamsModel {
     Map<String, dynamic>? resultConvertDyFnMap;
     var resultConvertDyFn = map["resultConvertDyFn"];
     if (resultConvertDyFn != null) {
-      resultConvertDyFnMap = DataTypeConvertUtils.toMapStrDyMap(resultConvertDyFn);
+      resultConvertDyFnMap = DataTypeConvertUtils.toMapStrDyMap(
+        resultConvertDyFn,
+      );
     }
     return ResponseParamsModel(
       statusCodeKey: map["statusCodeKey"],
@@ -66,7 +66,7 @@ class ResponseParamsModel {
     "successStatusCode": successStatusCode,
     "resDataKey": resDataKey,
     "resMsgKey": resMsgKey,
-    "resultKeyMap": json.encode(resultKeyMap),
+    "resultKeyMap": resultKeyMap,
     "resultConvertDyFn": resultConvertDyFn?.toJson(),
   };
 

@@ -1,5 +1,3 @@
-import 'dart:convert';
-
 import '../utils/data_type_convert_utils.dart';
 import '../utils/json_to_model_utils.dart';
 import 'api_key_desc_model.dart';
@@ -70,8 +68,8 @@ class RequestParamsModel {
       }
     }
     return {
-      "headerParams": headerParams == null ? null : json.encode(headerParams),
-      "staticParams": staticParams == null ? null : json.encode(staticParams),
+      "headerParams": headerParams,
+      "staticParams": staticParams,
       "dynamicParams": dynamicParamsToJson,
     };
   }
